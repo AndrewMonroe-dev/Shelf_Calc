@@ -287,6 +287,28 @@
   .sc-summary-line .val { font-weight: bold; color: var(--berry); }
   .sc-summary-line .val.over { color: #B91C1C; }
   .sc-summary-line .val-dim { color: var(--muted); }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 2px;
+    background: var(--sand); outline: none; border: none;
+    padding: 0; margin: 6px 0 2px; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--berry); cursor: pointer;
+    border: 2px solid var(--white);
+    box-shadow: 0 1px 3px rgba(92,31,56,0.4);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--berry); cursor: pointer;
+    border: 2px solid var(--white);
+    box-shadow: 0 1px 3px rgba(92,31,56,0.4);
+  }
+  .slider-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .slider-row input[type="range"] { flex: 1; margin: 0; }
+  .slider-row input[type="number"] { width: 58px; flex-shrink: 0; font-size: 13px; }
 
   /* ── Results ── */
   .metrics-row {
@@ -500,6 +522,21 @@ const HD_COLORS = ['#5C1F38','#7A2E4E','#A26769'];
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 const gv = id => document.getElementById(id);
+
+function syncFromSlider(si, pf, slidId, numId) {
+  const val = parseFloat(gv(slidId).value) || 0;
+  gv(numId).value = val;
+  SCENARIOS[si][pf] = val;
+  updateScenarioDisplay(si);
+  recalc();
+}
+function syncFromNum(si, pf, slidId, numId) {
+  const val = parseFloat(gv(numId).value) || 0;
+  gv(slidId).value = val;
+  SCENARIOS[si][pf] = val;
+  updateScenarioDisplay(si);
+  recalc();
+}
 const num = v => parseFloat(v) || 0;
 const fmtN = n => (!n || isNaN(n)) ? '—' : Math.round(Math.abs(n)).toLocaleString();
 const fmtPos = n => (!n || isNaN(n)) ? '—' : '+' + Math.round(n).toLocaleString();
@@ -562,20 +599,24 @@ function buildScenarios() {
 
 function buildMoveBlock(si, label, pf, lf) {
   const sc = SCENARIOS[si];
+  const slid = `sl-${si}-${pf}`;
+  const numinp = `ni-${si}-${pf}`;
   return `
     <div class="move-block">
       <div class="move-block-title">${label}</div>
-      <div class="move-inputs">
-        <div>
-          <label>% of Volume Moving</label>
-          <input type="number" value="${sc[pf]}" min="0" max="100" step="1"
-            oninput="SCENARIOS[${si}].${pf}=parseFloat(this.value)||0;updateScenarioDisplay(${si});recalc()">
+      <div style="margin-bottom:8px">
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">% of Volume Moving</label>
+        <div class="slider-row">
+          <input type="range" id="${slid}" value="${sc[pf]}" min="0" max="100" step="1"
+            oninput="syncFromSlider(${si},'${pf}','${slid}','${numinp}')">
+          <input type="number" id="${numinp}" value="${sc[pf]}" min="0" max="100" step="1"
+            oninput="syncFromNum(${si},'${pf}','${slid}','${numinp}')">
         </div>
-        <div>
-          <label>Lift %</label>
-          <input type="number" value="${sc[lf]}" min="0" step="1"
-            oninput="SCENARIOS[${si}].${lf}=parseFloat(this.value)||0;updateScenarioDisplay(${si});recalc()">
-        </div>
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Lift %</label>
+        <input type="number" value="${sc[lf]}" min="0" step="1" style="width:100%"
+          oninput="SCENARIOS[${si}].${lf}=parseFloat(this.value)||0;updateScenarioDisplay(${si});recalc()">
       </div>
     </div>
   `;
