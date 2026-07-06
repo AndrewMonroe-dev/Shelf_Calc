@@ -400,7 +400,7 @@
 
 <!-- ── HEADER ──────────────────────────────────────────────────────────────── -->
 <div id="header">
-  <div class="eyebrow">Delicato Family Wines &nbsp;·&nbsp; Shelf Impact Model</div>
+  <div class="eyebrow">Shelf Impact Model</div>
   <div class="title-row">
     <h1>Shelf Position Calculator</h1>
     <span class="security-note">All data is in-memory only — nothing stored or transmitted</span>
@@ -488,12 +488,12 @@
 
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
-const SKUS = Array.from({length:7}, (_,i) => ({ id:i, name:'', g2025:'', h126:'' }));
+const SKUS = Array.from({length:15}, (_,i) => ({ id:i, name:'', g2025:'', h126:'' }));
 
 const SCENARIOS = [
-  { name:'Scenario A — Most Optimistic', kneeArm:25, kneeEye:25, footArm:25, liftKA:43, liftKE:63, liftFA:43 },
-  { name:'Scenario B — Moderate',        kneeArm:13, kneeEye:12, footArm:25, liftKA:43, liftKE:63, liftFA:43 },
-  { name:'Scenario C — Conservative',    kneeArm:10, kneeEye: 5, footArm:10, liftKA:43, liftKE:63, liftFA:43 },
+  { name:'Scenario A — Most Optimistic', kneeArm:25, kneeEye:25, footArm:25, liftKA:10, liftKE:63, liftFA:43 },
+  { name:'Scenario B — Moderate',        kneeArm:13, kneeEye:12, footArm:25, liftKA:10, liftKE:63, liftFA:43 },
+  { name:'Scenario C — Conservative',    kneeArm:10, kneeEye: 5, footArm:10, liftKA:10, liftKE:63, liftFA:43 },
 ];
 
 const HD_COLORS = ['#5C1F38','#7A2E4E','#A26769'];
@@ -550,7 +550,7 @@ function buildScenarios() {
           <span class="val" id="sc-total-${i}">0%</span>
         </div>
         <div class="sc-summary-line">
-          <span>Already optimal</span>
+          <span>Did Not Move</span>
           <span class="val-dim" id="sc-stays-${i}">100%</span>
         </div>
       </div>
@@ -572,7 +572,7 @@ function buildMoveBlock(si, label, pf, lf) {
             oninput="SCENARIOS[${si}].${pf}=parseFloat(this.value)||0;updateScenarioDisplay(${si});recalc()">
         </div>
         <div>
-          <label>Lift % (from slides)</label>
+          <label>Lift %</label>
           <input type="number" value="${sc[lf]}" min="0" step="1"
             oninput="SCENARIOS[${si}].${lf}=parseFloat(this.value)||0;updateScenarioDisplay(${si});recalc()">
         </div>
