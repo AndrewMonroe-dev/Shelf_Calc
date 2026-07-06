@@ -7,9 +7,9 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --berry:  #5C1F38; --berryL: #7A2E4E; --rose: #A26769;
-    --cream:  #F8F2EC; --sand:   #EDD5D0; --muted: #7A5C62;
-    --dark:   #2C1810; --white:  #FFFFFF; --green: #1A6B3C;
+    --berry:#5C1F38; --berryL:#7A2E4E; --rose:#A26769;
+    --cream:#F8F2EC; --sand:#EDD5D0; --muted:#7A5C62;
+    --dark:#2C1810; --white:#FFFFFF; --green:#1A6B3C;
   }
   body { font-family: Calibri, Arial, sans-serif; background: var(--cream); color: var(--dark); min-height: 100vh; }
 
@@ -20,7 +20,7 @@
   .title-row h1 { font-size: 20px; font-weight: bold; color: var(--white); }
   .sec-note { font-size: 11px; color: #C09AAA; font-style: italic; }
   .tab-bar { display: flex; gap: 4px; }
-  .tab-btn { background: transparent; color: #E8C8D0; border: none; padding: 7px 18px; font-size: 13px; font-family: inherit; cursor: pointer; border-radius: 6px 6px 0 0; transition: background .15s, color .15s; }
+  .tab-btn { background: transparent; color: #E8C8D0; border: none; padding: 7px 18px; font-size: 13px; font-family: inherit; cursor: pointer; border-radius: 6px 6px 0 0; }
   .tab-btn.active { background: var(--cream); color: var(--berry); font-weight: bold; }
 
   /* Content */
@@ -28,11 +28,16 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
+  /* Toggle */
+  .mode-toggle { display: flex; gap: 0; background: var(--white); border-radius: 8px; padding: 4px; box-shadow: 0 1px 4px rgba(92,31,56,.12); width: fit-content; margin-bottom: 20px; }
+  .toggle-btn { background: transparent; border: none; padding: 8px 20px; font-size: 13px; font-family: inherit; cursor: pointer; border-radius: 6px; color: var(--muted); transition: background .15s, color .15s; }
+  .toggle-btn.active { background: var(--berry); color: var(--white); font-weight: bold; }
+  .mode-desc { font-size: 11px; color: var(--muted); font-style: italic; margin-bottom: 16px; padding: 8px 12px; background: var(--white); border-radius: 6px; border-left: 3px solid var(--rose); }
+
   /* Inputs */
   input[type="text"], input[type="number"] {
     border: 1px solid var(--rose); border-radius: 6px; padding: 4px 8px;
-    font-size: 13px; font-family: inherit; background: var(--white);
-    color: var(--dark); outline: none; width: 100%;
+    font-size: 13px; font-family: inherit; background: var(--white); color: var(--dark); outline: none; width: 100%;
   }
   input[type="number"] { text-align: right; }
   input:focus { border-color: var(--berry); }
@@ -56,13 +61,14 @@
   .set-card input { font-size: 20px; font-weight: bold; color: var(--berry); border-color: rgba(162,103,105,.4); }
 
   /* SKU Table */
-  .tbl-wrap { background: var(--white); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(92,31,56,.1); margin-bottom: 14px; }
+  .tbl-wrap { background: var(--white); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(92,31,56,.1); margin-bottom: 8px; }
   .tbl-hd { background: var(--berry); color: var(--white); display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1.2fr; gap: 6px; padding: 10px 14px; font-size: 11px; font-weight: bold; }
-  .tbl-hd .right, .tbl-row .right, .tbl-tot .right { text-align: right; }
+  .tbl-hd .right { text-align: right; }
   .tbl-hd .proj-hd { text-align: right; color: var(--sand); font-style: italic; }
   .tbl-row { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1.2fr; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--cream); align-items: center; }
   .proj-cell { text-align: right; font-size: 13px; color: var(--rose); font-style: italic; }
   .tbl-tot { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1.2fr; gap: 6px; padding: 10px 14px; background: var(--cream); font-weight: bold; font-size: 13px; color: var(--berry); }
+  .tbl-tot .right { text-align: right; }
   .tbl-note { padding: 6px 14px 10px; font-size: 10px; color: var(--muted); font-style: italic; }
 
   /* Scenario cards */
@@ -82,7 +88,6 @@
   .move-row > div { flex: 1; }
   .move-row label { font-size: 10px; color: var(--muted); display: block; margin-bottom: 2px; }
   .sc-warning { background: #B91C1C; border-radius: 4px; padding: 2px 8px; margin-top: 4px; font-size: 11px; color: var(--white); display: none; }
-  /* Master slider panel */
   .master-panel { margin-top: 14px; padding: 12px; background: var(--berry); border-radius: 8px; }
   .master-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
   .master-lbl { font-size: 11px; color: rgba(255,255,255,.75); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
@@ -108,11 +113,11 @@
   table { width: 100%; border-collapse: collapse; }
   td, th { padding: 8px 12px; font-size: 13px; }
   .tl { text-align: left; } .tr { text-align: right; }
-  .t-section td { background: var(--sand); font-size: 11px; font-weight: bold; color: var(--berry); text-transform: uppercase; letter-spacing: 1px; padding: 6px 12px; }
+  .t-sec td { background: var(--sand); font-size: 11px; font-weight: bold; color: var(--berry); text-transform: uppercase; letter-spacing: 1px; padding: 6px 12px; }
   .t-hi { background: #EDD5D0 !important; }
   .t-hi td { font-size: 15px !important; font-weight: bold !important; color: var(--berry) !important; }
   tr:nth-child(even) { background: #FDFAF8; }
-  tr.t-section:nth-child(even) { background: var(--sand); }
+  tr.t-sec:nth-child(even) { background: var(--sand); }
   .det-wrap { background: var(--white); border-radius: 8px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(92,31,56,.1); }
   .det-hd { padding: 10px 16px; font-size: 13px; font-weight: bold; color: var(--white); }
   .det-hd.s0 { background: var(--berry); } .det-hd.s1 { background: var(--berryL); } .det-hd.s2 { background: var(--rose); }
@@ -142,46 +147,58 @@
 
   <!-- TAB 0: DATA ENTRY -->
   <div class="tab-panel active" id="panel-0">
+
+    <!-- Mode toggle -->
+    <div class="mode-toggle">
+      <button id="toggle-0" class="toggle-btn active" onclick="setMode(0)">Projecting H2 Current Year</button>
+      <button id="toggle-1" class="toggle-btn" onclick="setMode(1)">Projecting H1 Next Year</button>
+    </div>
+    <div class="mode-desc" id="mode-desc">
+      <strong>H1 in hand, projecting H2:</strong> Enter Last Year H1 &amp; H2, plus your H1 Current Year actuals. The model projects H2 Current Year and H1 Next Year using the H1 trend rate.
+    </div>
+
+    <!-- Settings -->
     <div class="settings-row">
       <div class="set-card">
-        <label>Days in Year</label>
-        <input type="number" id="g-diy" value="365" min="1" max="366" step="1" oninput="recalc()">
-        <div class="tip">Use 365 or 366 for leap year. Drives H2 length and lift timing precision.</div>
+        <label>Days in H1</label>
+        <input type="number" id="g-dh1" value="182" min="1" max="200" step="1" oninput="recalc()">
+        <div class="tip">Calendar days in H1. Non-leap year: 181. Leap year: 182.</div>
       </div>
       <div class="set-card">
-        <label>Days Before Lift Active</label>
-        <input type="number" id="g-dnl" value="60" min="0" step="1" oninput="recalc()">
-        <div class="tip">How many days into H2 before shelf sets are complete</div>
+        <label>Days in H2</label>
+        <input type="number" id="g-dh2" value="183" min="1" max="200" step="1" oninput="recalc()">
+        <div class="tip">Calendar days in H2. Non-leap year: 184. Adjust as needed.</div>
       </div>
       <div class="set-card">
-        <label>Days Elapsed in H1 Current Year</label>
-        <input type="number" id="g-del" value="" min="1" max="366" step="1" placeholder="Leave blank = full H1" oninput="recalc()">
-        <div class="tip">Enter actual days of data if mid-H1. Blank assumes full H1 is complete.</div>
+        <label id="del-label">Days Elapsed in H1 Curr. Year</label>
+        <input type="number" id="g-del" value="" min="1" max="366" step="1" placeholder="Blank = full half" oninput="recalc()">
+        <div class="tip">If mid-period, enter days of data you have. Blank = full half complete.</div>
       </div>
       <div class="set-card dark" id="decline-card" style="display:none">
-        <label>Derived Decline Rate</label>
+        <label id="trend-label">H1 Trend Rate</label>
         <div class="bigval" id="decline-val">—</div>
-        <div class="tip" id="decline-tip">H1 Current Year ÷ H1 Last Year − 1.</div>
+        <div class="tip" id="decline-tip">Positive = growth. Negative = decline.</div>
       </div>
     </div>
 
+    <!-- SKU Table -->
     <div class="tbl-wrap">
       <div class="tbl-hd">
         <div>SKU Name</div>
         <div class="right">H1 Last Year</div>
         <div class="right">H2 Last Year</div>
-        <div class="right">H1 Current Year</div>
-        <div class="proj-hd">H2 Projected *</div>
+        <div class="right" id="col-actP">H1 Current Year</div>
+        <div class="proj-hd" id="col-proj">H2 Projected *</div>
       </div>
       <div id="sku-rows"></div>
       <div class="tbl-tot">
         <div>TOTAL</div>
         <div class="right" id="tot-h1ly">—</div>
         <div class="right" id="tot-h2ly">—</div>
-        <div class="right" id="tot-h1cy">—</div>
-        <div class="right" id="tot-h2proj" style="color:var(--rose);font-style:italic">—</div>
+        <div class="right" id="tot-actp">—</div>
+        <div class="right" id="tot-proj" style="color:var(--rose);font-style:italic">—</div>
       </div>
-      <div class="tbl-note">* H2 Projected = H2 Last Year × (1 + derived decline rate). Empty rows are excluded from all calculations.</div>
+      <div class="tbl-note" id="tbl-note">* H2 Projected = H2 Last Year × (1 + H1 Trend Rate). Empty rows excluded from all calculations.</div>
     </div>
 
     <div class="row-btns">
@@ -207,7 +224,9 @@
 </div>
 
 <script>
-const SKUS = Array.from({length:25}, (_,i) => ({id:i, name:'', h1ly:'', h2ly:'', h1cy:''}));
+let MODE = 0; // 0 = Projecting H2, 1 = Projecting H1 Next Year
+
+const SKUS = Array.from({length:25}, (_,i) => ({id:i, name:'', h1ly:'', h2ly:'', h1cy:'', h2cy:''}));
 
 const HD = ['#5C1F38','#7A2E4E','#A26769'];
 
@@ -223,11 +242,58 @@ const fmtN   = n => (!n||isNaN(n)) ? '—' : Math.round(Math.abs(n)).toLocaleStr
 const fmtPos = n => (!n||isNaN(n)) ? '—' : '+'+Math.round(n).toLocaleString();
 const pct    = n => isNaN(n) ? '—' : (n>=0?'+':'−')+Math.abs(n).toFixed(1)+'%';
 
+// ── Mode toggle ───────────────────────────────────────────────────────────────
+const MODE_LABELS = {
+  0: {
+    actP:     'H1 Current Year',
+    proj:     'H2 Projected *',
+    trend:    'H1 Trend Rate',
+    delLbl:   'Days Elapsed in H1 Curr. Year',
+    note:     '* H2 Projected = H2 Last Year × (1 + H1 Trend Rate). Empty rows excluded from all calculations.',
+    desc:     '<strong>H1 in hand, projecting H2:</strong> Enter Last Year H1 &amp; H2, plus your H1 Current Year actuals. The model projects H2 Current Year and H1 Next Year using the H1 trend rate.',
+    primLbl:  'H2 Current Year',
+    secLbl:   'H1 Next Year',
+    secVs:    'H1 Next Year vs. H1 Current Year',
+    fyLbl:    'Full Year: Current vs. Last Year',
+    skuHd:    'H2 Current Year',
+  },
+  1: {
+    actP:     'H2 Current Year',
+    proj:     'H1 Next Year *',
+    trend:    'H2 Trend Rate',
+    delLbl:   'Days Elapsed in H2 Curr. Year',
+    note:     '* H1 Next Year = H1 Last Year × (1 + H2 Trend Rate). Empty rows excluded from all calculations.',
+    desc:     '<strong>H2 in hand, projecting H1 next year:</strong> Enter Last Year H1 &amp; H2, plus your H2 Current Year actuals. The model projects H1 Next Year and H2 Next Year using the H2 trend rate.',
+    primLbl:  'H1 Next Year',
+    secLbl:   'H2 Next Year',
+    secVs:    'H2 Next Year vs. H2 Current Year',
+    fyLbl:    'Full Year: Projected vs. Last Year',
+    skuHd:    'H1 Next Year',
+  },
+};
+
+function setMode(m) {
+  MODE = m;
+  gv('toggle-0').className = m===0 ? 'toggle-btn active' : 'toggle-btn';
+  gv('toggle-1').className = m===1 ? 'toggle-btn active' : 'toggle-btn';
+  const L = MODE_LABELS[m];
+  gv('col-actP').textContent  = L.actP;
+  gv('col-proj').textContent  = L.proj;
+  gv('trend-label').textContent = L.trend;
+  gv('del-label').textContent = L.delLbl;
+  gv('tbl-note').textContent  = L.note;
+  gv('mode-desc').innerHTML   = L.desc;
+  buildSkuRows();
+  recalc();
+}
+
 // ── Build SKU rows ────────────────────────────────────────────────────────────
 function buildSkuRows() {
   const cont = gv('sku-rows');
   cont.innerHTML = '';
   SKUS.forEach(s => {
+    const actField = MODE===0 ? 'h1cy' : 'h2cy';
+    const actVal   = MODE===0 ? s.h1cy : s.h2cy;
     const row = document.createElement('div');
     row.className = 'tbl-row';
     row.innerHTML =
@@ -237,8 +303,8 @@ function buildSkuRows() {
         'oninput="SKUS['+s.id+'].h1ly=this.value;recalc()"></div>'+
       '<div><input type="number" value="'+s.h2ly+'" placeholder="0" min="0" '+
         'oninput="SKUS['+s.id+'].h2ly=this.value;recalc()"></div>'+
-      '<div><input type="number" value="'+s.h1cy+'" placeholder="0" min="0" '+
-        'oninput="SKUS['+s.id+'].h1cy=this.value;recalc()"></div>'+
+      '<div><input type="number" value="'+actVal+'" placeholder="0" min="0" '+
+        'oninput="SKUS['+s.id+'].'+actField+'=this.value;recalc()"></div>'+
       '<div class="proj-cell" id="proj-'+s.id+'">—</div>';
     cont.appendChild(row);
   });
@@ -278,7 +344,7 @@ function buildScenarios() {
               'oninput="syncMaster('+i+',\'num\',this.value)">'+
           '</div>'+
           '<div class="split-note">Split: <span id="sc-split-'+i+'">'+
-            (sc.kneeArm+sc.kneeEye+sc.footArm)+'% allocated</span></div>'+
+            (sc.kneeArm+sc.kneeEye+sc.footArm+sc.footEye)+'% allocated</span></div>'+
           '<div class="sc-warning" id="sc-warn-'+i+'">⚠ Split exceeds 100% — reduce individual allocations</div>'+
         '</div>'+
       '</div>';
@@ -292,18 +358,13 @@ function buildMoveBlock(si, label, pf, lf) {
   return '<div class="move-block">'+
     '<div class="move-title">'+label+'</div>'+
     '<div class="move-row">'+
-      '<div>'+
-        '<label>Share of Moving Volume %</label>'+
+      '<div><label>Share of Moving Volume %</label>'+
         '<input type="number" value="'+sc[pf]+'" min="0" max="100" step="1" '+
-          'oninput="SCENARIOS['+si+'].'+pf+'=parseFloat(this.value)||0;updateSc('+si+');recalc()">'+
-      '</div>'+
-      '<div>'+
-        '<label>Lift %</label>'+
+          'oninput="SCENARIOS['+si+'].'+pf+'=parseFloat(this.value)||0;updateSc('+si+');recalc()"></div>'+
+      '<div><label>Lift %</label>'+
         '<input type="number" value="'+sc[lf]+'" min="0" step="1" '+
-          'oninput="SCENARIOS['+si+'].'+lf+'=parseFloat(this.value)||0;updateSc('+si+');recalc()">'+
-      '</div>'+
-    '</div>'+
-  '</div>';
+          'oninput="SCENARIOS['+si+'].'+lf+'=parseFloat(this.value)||0;updateSc('+si+');recalc()"></div>'+
+    '</div></div>';
 }
 
 function updateSc(i) {
@@ -332,96 +393,131 @@ function syncMaster(si, src, val) {
 
 // ── Core calculation ──────────────────────────────────────────────────────────
 function calc() {
-  const diy  = Math.max(1, num(gv('g-diy').value));
-  const dnl  = num(gv('g-dnl').value);
-  const dH2  = diy/2;
-  const dLift= Math.max(0, dH2-dnl);
+  const dH1 = Math.max(1, num(gv('g-dh1').value));
+  const dH2 = Math.max(1, num(gv('g-dh2').value));
+  const dEl = num(gv('g-del').value);
 
-  const rows = SKUS.map(s=>({
-    name: s.name||'—',
-    h1ly: num(s.h1ly), h2ly: num(s.h2ly), h1cy: num(s.h1cy)
+  // Active period days depends on mode
+  const dAct = MODE===0 ? dH1 : dH2;
+
+  const rows = SKUS.map(s => ({
+    name:  s.name||'—',
+    h1ly:  num(s.h1ly),
+    h2ly:  num(s.h2ly),
+    actP:  MODE===0 ? num(s.h1cy) : num(s.h2cy),
   }));
 
   const sumH1LY = rows.reduce((a,r)=>a+r.h1ly,0);
   const sumH2LY = rows.reduce((a,r)=>a+r.h2ly,0);
-  const sumH1CY = rows.reduce((a,r)=>a+r.h1cy,0);
   const sumLY   = sumH1LY+sumH2LY;
+  const sumActP = rows.reduce((a,r)=>a+r.actP,0);
 
-  const dEl  = num(gv('g-del').value);
-  const dH1  = diy/2;
-  // Normalize H1 CY to full-half equivalent if partial period entered
-  const h1cyNorm = (dEl>0 && dEl<dH1) ? sumH1CY*(dH1/dEl) : sumH1CY;
-  const isPartial = dEl>0 && dEl<dH1;
-  const decline = sumH1LY>0 ? h1cyNorm/sumH1LY-1 : 0;
+  // Same-period reference for trend: H1 LY for Mode 0, H2 LY for Mode 1
+  const sumRefP = MODE===0 ? sumH1LY : sumH2LY;
 
-  rows.forEach(r=>{ r.h2proj = r.h2ly*(1+decline); });
-  const sumH2Proj = rows.reduce((a,r)=>a+r.h2proj,0);
-  const fyCY_base = h1cyNorm+sumH2Proj;
-  const h1NY_base = h1cyNorm*(1+decline);
+  // Normalize partial period
+  const isPartial = dEl>0 && dEl<dAct;
+  const actPNorm  = isPartial ? sumActP*(dAct/dEl) : sumActP;
 
-  const sc = SCENARIOS.map(s=>{
+  // Trend rate: same-period CY vs same-period LY
+  const trend = sumRefP>0 ? actPNorm/sumRefP-1 : 0;
+
+  // Primary projection base: opposite half of LY
+  // Mode 0: project H2 CY from H2 LY
+  // Mode 1: project H1 NY from H1 LY
+  const sumPrimBase = MODE===0 ? sumH2LY : sumH1LY;
+
+  // Per-SKU
+  rows.forEach(r => {
+    r.actPNorm  = isPartial ? r.actP*(dAct/dEl) : r.actP;
+    r.primBase  = MODE===0 ? r.h2ly : r.h1ly;
+    r.primProj  = r.primBase*(1+trend);         // primary projection
+    r.secProj   = r.actPNorm*(1+trend);         // secondary: one more step from normalized actP
+  });
+
+  const sumPrimProj = rows.reduce((a,r)=>a+r.primProj,0);
+  const sumSecProj  = rows.reduce((a,r)=>a+r.secProj,0);
+
+  // Full year bases
+  const fyBase = actPNorm+sumPrimProj; // active period + primary projection
+
+  const sc = SCENARIOS.map(s => {
     const net = (s.masterPct/100)*(
       (s.kneeArm/100)*(s.liftKA/100)+
       (s.kneeEye/100)*(s.liftKE/100)+
       (s.footArm/100)*(s.liftFA/100)+
       (s.footEye/100)*(s.liftFE/100)
     );
-    const full    = 1+net;
-    const bFactor = dH2>0 ? (dnl/dH2)+(dLift/dH2)*full : full;
-    const h2w  = sumH2Proj*bFactor;
-    const h2i  = h2w-sumH2Proj;
-    const fyw  = sumH1CY+h2w;
-    const fyP  = sumLY>0?(fyw/sumLY-1)*100:0;
-    const fyBP = sumLY>0?(fyCY_base/sumLY-1)*100:0;
-    const h1NYw  = h1NY_base*full;
-    const h1NYi  = h1NYw-h1NY_base;
-    const h1NYP  = sumH1CY>0?(h1NYw/sumH1CY-1)*100:0;
-    const h1NYBP = sumH1CY>0?(h1NY_base/sumH1CY-1)*100:0;
-    const skuH2  = rows.map(r=>({
-      name:r.name, h1cy:isPartial ? r.h1cy*(dH1/dEl) : r.h1cy,
-      h2b:r.h2proj, h2w:r.h2proj*bFactor, incr:r.h2proj*(bFactor-1)
+    const full = 1+net;
+
+    // Primary: prim projection with moves
+    const primW = sumPrimProj*full;
+    const primI = primW-sumPrimProj;
+
+    // Full year with/without moves
+    const fyW  = actPNorm+primW;
+    const fyP  = sumLY>0?(fyW/sumLY-1)*100:0;
+    const fyBP = sumLY>0?(fyBase/sumLY-1)*100:0;
+
+    // Secondary: one more period forward
+    const secW = sumSecProj*full;
+    const secI = secW-sumSecProj;
+    const secP  = actPNorm>0?(secW/actPNorm-1)*100:0;
+    const secBP = actPNorm>0?(sumSecProj/actPNorm-1)*100:0;
+
+    // Per-SKU primary detail
+    const skuPrim = rows.map(r=>({
+      name: r.name, actP: r.actPNorm,
+      primB: r.primProj, primW: r.primProj*full, primI: r.primProj*(full-1),
     }));
+
     return {
-      name:s.name, net:net*100, blended:(bFactor-1)*100,
-      h2b:sumH2Proj, h2w, h2i, fyw, fyCY_base, fyP, fyBP,
-      h1NY_base, h1NYw, h1NYi, h1NYP, h1NYBP,
-      combined:h2i+h1NYi, skuH2
+      name:s.name, net:net*100,
+      primB:sumPrimProj, primW, primI,
+      fyBase, fyW, fyP, fyBP,
+      secB:sumSecProj, secW, secI, secP, secBP,
+      combined:primI+secI, skuPrim,
     };
   });
 
-  return {rows,sumH1LY,sumH2LY,sumH1CY,sumLY,
-    decline:decline*100, h1cyNorm, sumH2Proj, fyCY_base, h1NY_base,
-    isPartial, hasData:sumLY>0, sc};
+  return {
+    rows, sumH1LY, sumH2LY, sumActP, actPNorm, sumLY,
+    trend:trend*100, sumPrimProj, fyBase,
+    isPartial, hasData:sumLY>0, sc,
+  };
 }
 
 // ── Update DOM ────────────────────────────────────────────────────────────────
 function recalc() {
   const R = calc();
+  const L = MODE_LABELS[MODE];
 
-  // Per-SKU projected H2 column
-  let tH1LY=0,tH2LY=0,tH1CY=0,tH2P=0;
+  // Per-SKU projected column
+  let tH1LY=0,tH2LY=0,tActP=0,tProj=0;
   SKUS.forEach(s=>{
-    tH1LY+=num(s.h1ly); tH2LY+=num(s.h2ly); tH1CY+=num(s.h1cy);
-    const h2ly=num(s.h2ly);
-    const proj = h2ly>0 ? h2ly*(1+R.decline/100) : 0;
-    tH2P+=proj;
+    tH1LY+=num(s.h1ly); tH2LY+=num(s.h2ly);
+    const aVal = MODE===0?num(s.h1cy):num(s.h2cy);
+    tActP+=aVal;
+    const refBase = MODE===0?num(s.h2ly):num(s.h1ly);
+    const proj = refBase>0 ? refBase*(1+R.trend/100) : 0;
+    tProj+=proj;
     const el=gv('proj-'+s.id);
     if(el) el.textContent = proj>0 ? Math.round(proj).toLocaleString() : '—';
   });
 
   gv('tot-h1ly').textContent = tH1LY>0?tH1LY.toLocaleString():'—';
   gv('tot-h2ly').textContent = tH2LY>0?tH2LY.toLocaleString():'—';
-  gv('tot-h1cy').textContent = tH1CY>0?tH1CY.toLocaleString():'—';
-  gv('tot-h2proj').textContent = tH2P>0?Math.round(tH2P).toLocaleString():'—';
+  gv('tot-actp').textContent = tActP>0?tActP.toLocaleString():'—';
+  gv('tot-proj').textContent = tProj>0?Math.round(tProj).toLocaleString():'—';
 
   const dc=gv('decline-card');
   if(R.hasData){
     dc.style.display='block';
-    gv('decline-val').textContent=pct(R.decline);
+    gv('decline-val').textContent=pct(R.trend);
     const tip=gv('decline-tip');
-    if(tip) tip.textContent = R.isPartial
-      ? 'Partial period normalized to full H1 run rate. Linear extrapolation — seasonal variance not accounted for.'
-      : 'Full H1 comparison. H1 Current Year ÷ H1 Last Year − 1.';
+    if(tip) tip.textContent=R.isPartial
+      ?'Partial period — normalized to full half run rate. Linear extrapolation; seasonal variance not accounted for.'
+      :'Full half comparison. Positive = growth, negative = decline.';
   } else dc.style.display='none';
 
   renderResults(R);
@@ -430,6 +526,8 @@ function recalc() {
 // ── Render results ────────────────────────────────────────────────────────────
 function renderResults(R) {
   const cont=gv('results-inner');
+  const L=MODE_LABELS[MODE];
+
   if(!R.hasData){
     cont.innerHTML='<div class="no-data"><h2>No data yet</h2>'+
       '<p>Enter SKU volumes in Data Entry to generate results.</p>'+
@@ -437,11 +535,13 @@ function renderResults(R) {
     return;
   }
 
+  // Metric cards
   let html='<div class="metrics-row">';
-  [{label:'Last Year Total',       val:fmtN(R.sumLY),       sub:'H1 + H2 Last Year across all SKUs', dark:false},
-   {label:'H1 Current Year',       val:fmtN(R.h1cyNorm),    sub:R.isPartial?'Partial period — normalized to full H1 run rate':'Fixed — already happened', dark:false},
-   {label:'H2 Current Yr Baseline',val:fmtN(R.sumH2Proj),   sub:'Projected, no shelf changes',       dark:false},
-   {label:'Derived Decline Rate',  val:pct(R.decline),       sub:'H1 CY ÷ H1 LY − 1. No assumptions.',dark:true},
+  [
+    {label:'Last Year Total',      val:fmtN(R.sumLY),        sub:'H1 LY + H2 LY combined',                    dark:false},
+    {label:L.actP,                 val:fmtN(R.actPNorm),     sub:R.isPartial?'Partial period — normalized run rate':'Fixed — already happened', dark:false},
+    {label:L.primLbl+' Baseline',  val:fmtN(R.sumPrimProj),  sub:'Projected — no shelf changes',               dark:false},
+    {label:L.trend,                val:pct(R.trend),          sub:R.isPartial?'Normalized partial period':'Same-period comparison. Positive = growth.',dark:true},
   ].forEach(m=>{
     html+='<div class="met-card'+(m.dark?' dark':'')+'">'+
       '<div class="met-lbl">'+m.label+'</div>'+
@@ -453,34 +553,35 @@ function renderResults(R) {
   // Comparison table
   html+='<div class="cmp-wrap"><div class="cmp-hd">Three-Scenario Comparison</div><table>'+
     '<thead><tr style="background:var(--cream)">'+
-    '<th class="tl" style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;min-width:220px">Metric</th>'+
+    '<th class="tl" style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;min-width:240px">Metric</th>'+
     R.sc.map(s=>'<th class="tr" style="color:var(--berry);font-size:12px">'+s.name.split('—')[0].trim()+'</th>').join('')+
     '</tr></thead><tbody>';
 
   const rows2=[
-    {label:'Net Lift on Moving Volume',                      vals:R.sc.map(s=>pct(s.net))},
-    {label:'Blended H2 Lift (timing adjusted)',              vals:R.sc.map(s=>pct(s.blended))},
-    {section:'H2 Current Year'},
-    {label:'H2 Baseline — No Moves',                        vals:R.sc.map(s=>fmtN(s.h2b)),  dim:true},
-    {label:'H2 With Moves',                                  vals:R.sc.map(s=>fmtN(s.h2w)),  bold:true},
-    {label:'H2 Incremental Cases',                           vals:R.sc.map(s=>fmtPos(s.h2i)),bold:true,green:true},
-    {section:'Full Year: Current vs. Last Year'},
-    {label:'Full Year No Moves',                             vals:R.sc.map(s=>fmtN(s.fyCY_base)+'  ('+pct(s.fyBP)+')'), dim:true},
-    {label:'Full Year With Moves',                           vals:R.sc.map(s=>fmtN(s.fyw)+'  ('+pct(s.fyP)+')'),       bold:true},
-    {section:'H1 Next Year vs. H1 Current Year'},
-    {label:'H1 Next Year — No Moves',                       vals:R.sc.map(s=>fmtN(s.h1NY_base)+'  ('+pct(s.h1NYBP)+')'), dim:true},
-    {label:'H1 Next Year — With Moves',                     vals:R.sc.map(s=>fmtN(s.h1NYw)+'  ('+pct(s.h1NYP)+')'),      bold:true},
-    {label:'H1 Next Year Incremental Cases',                 vals:R.sc.map(s=>fmtPos(s.h1NYi)),bold:true,green:true},
+    {label:'Net Lift on Moving Volume',                       vals:R.sc.map(s=>pct(s.net))},
+    {label:'H2 Lift Applied (full period)',                   vals:R.sc.map(s=>pct(s.net))},
+    {section:L.primLbl},
+    {label:L.primLbl+' — No Moves',  vals:R.sc.map(s=>fmtN(s.primB)),  dim:true},
+    {label:L.primLbl+' — With Moves',vals:R.sc.map(s=>fmtN(s.primW)),  bold:true},
+    {label:L.primLbl+' Incremental', vals:R.sc.map(s=>fmtPos(s.primI)),bold:true,green:true},
+    {section:L.fyLbl},
+    {label:'Full Year — No Moves',   vals:R.sc.map(s=>fmtN(s.fyBase)+'  ('+pct(s.fyBP)+')'), dim:true},
+    {label:'Full Year — With Moves', vals:R.sc.map(s=>fmtN(s.fyW)+'  ('+pct(s.fyP)+')'),    bold:true},
+    {section:L.secVs},
+    {label:L.secLbl+' — No Moves',  vals:R.sc.map(s=>fmtN(s.secB)+'  ('+pct(s.secBP)+')'), dim:true},
+    {label:L.secLbl+' — With Moves',vals:R.sc.map(s=>fmtN(s.secW)+'  ('+pct(s.secP)+')'),  bold:true},
+    {label:L.secLbl+' Incremental', vals:R.sc.map(s=>fmtPos(s.secI)), bold:true,green:true},
     {section:'Combined'},
-    {label:'Total Incremental Cases (H2 CY + H1 Next Year)',vals:R.sc.map(s=>fmtPos(s.combined)),bold:true,green:true,hi:true},
+    {label:'Total Incremental Cases ('+L.primLbl+' + '+L.secLbl+')',
+                                     vals:R.sc.map(s=>fmtPos(s.combined)),bold:true,green:true,hi:true},
   ];
 
   rows2.forEach((row,ri)=>{
     if(row.section){
-      html+='<tr class="t-section"><td colspan="4">'+row.section+'</td></tr>';
+      html+='<tr class="t-sec"><td colspan="4">'+row.section+'</td></tr>';
       return;
     }
-    const cls=[row.hi?'t-hi':'',row.dim?'t-dim':''].filter(Boolean).join(' ');
+    const cls=row.hi?'t-hi':'';
     html+='<tr class="'+cls+'">'+
       '<td class="tl" style="color:var(--muted);font-size:'+(row.hi?13:12)+'px;font-weight:'+(row.bold?'bold':'normal')+'">'+row.label+'</td>'+
       row.vals.map(v=>'<td class="tr" style="font-weight:'+(row.bold?'bold':'normal')+';font-size:'+(row.hi?15:13)+'px;color:'+(row.green?'var(--green)':row.dim?'var(--muted)':'var(--dark)')+'">'+v+'</td>').join('')+
@@ -488,33 +589,49 @@ function renderResults(R) {
   });
   html+='</tbody></table></div>';
 
-  // Per-SKU detail
+  // Per-SKU detail per scenario
   R.sc.forEach((sc,si)=>{
-    const active=sc.skuH2.filter(r=>r.h2b>0||r.h1cy>0);
+    const active=sc.skuPrim.filter(r=>r.primB>0||r.actP>0);
     if(!active.length) return;
-    html+='<div class="det-wrap"><div class="det-hd s'+si+'">'+sc.name+' — SKU Detail (H2 Current Year)</div>'+
+    html+='<div class="det-wrap"><div class="det-hd s'+si+'">'+sc.name+' — SKU Detail ('+L.skuHd+')</div>'+
       '<table><thead><tr style="background:var(--cream)">'+
-      ['SKU','H1 Current Yr','H2 Baseline','H2 With Moves','H2 Incremental'].map((h,hi)=>
-        '<th style="text-align:'+(hi?'right':'left')+';color:var(--muted);font-size:11px">'+h+'</th>'
+      [L.actP,L.primLbl+' Baseline',L.primLbl+' With Moves',L.primLbl+' Incremental'].map((h,hi)=>
+        '<th style="text-align:'+(hi?'right':'left')+';color:var(--muted);font-size:11px">'+
+        (hi===0?'<span style="text-align:left">SKU</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'+h:h)+'</th>'
       ).join('')+'</tr></thead><tbody>';
+
+    // Fix table header - rewrite properly
+    html = html.slice(0, html.lastIndexOf('<table>')) +
+      '<table><thead><tr style="background:var(--cream)">'+
+      ['SKU', L.actP, L.primLbl+' Baseline', L.primLbl+' With Moves', L.primLbl+' Incremental'].map((h,hi)=>
+        '<th style="text-align:'+(hi===0?'left':'right')+';color:var(--muted);font-size:11px">'+h+'</th>'
+      ).join('')+'</tr></thead><tbody>';
+
     active.forEach(r=>{
       html+='<tr><td class="tl">'+r.name+'</td>'+
-        '<td class="tr" style="color:var(--muted)">'+fmtN(r.h1cy)+'</td>'+
-        '<td class="tr" style="color:var(--muted)">'+fmtN(r.h2b)+'</td>'+
-        '<td class="tr" style="font-weight:bold;color:var(--berry)">'+fmtN(r.h2w)+'</td>'+
-        '<td class="tr" style="font-weight:bold;color:var(--green)">+'+fmtN(r.incr)+'</td></tr>';
+        '<td class="tr" style="color:var(--muted)">'+fmtN(r.actP)+'</td>'+
+        '<td class="tr" style="color:var(--muted)">'+fmtN(r.primB)+'</td>'+
+        '<td class="tr" style="font-weight:bold;color:var(--berry)">'+fmtN(r.primW)+'</td>'+
+        '<td class="tr" style="font-weight:bold;color:var(--green)">+'+fmtN(r.primI)+'</td></tr>';
     });
-    const tH1=active.reduce((a,r)=>a+r.h1cy,0);
+    const tActP=active.reduce((a,r)=>a+r.actP,0);
     html+='<tr style="background:var(--cream);font-weight:bold;color:var(--berry)">'+
       '<td class="tl">TOTAL</td>'+
-      '<td class="tr">'+fmtN(tH1)+'</td>'+
-      '<td class="tr">'+fmtN(sc.h2b)+'</td>'+
-      '<td class="tr">'+fmtN(sc.h2w)+'</td>'+
-      '<td class="tr">+'+fmtN(sc.h2i)+'</td></tr>'+
+      '<td class="tr">'+fmtN(tActP)+'</td>'+
+      '<td class="tr">'+fmtN(sc.primB)+'</td>'+
+      '<td class="tr">'+fmtN(sc.primW)+'</td>'+
+      '<td class="tr">+'+fmtN(sc.primI)+'</td></tr>'+
       '</tbody></table></div>';
   });
 
-  html+='<div class="footnote">Decline rate derived from H1 Current Year ÷ H1 Last Year — no split assumptions. H2 projection applies that rate to H2 Last Year. If Days Elapsed in H1 is set, Current Year data is normalized to a full-half run rate using linear extrapolation; seasonal distribution variance is not accounted for. All excluded variables (compliance, facings, competitive context) bias results toward overstatement — treat as ceiling estimates.</div>';
+  html+='<div class="footnote">'+
+    'Trend rate derived from same-period comparison ('+L.actP+' ÷ '+
+    (MODE===0?'H1':'H2')+' Last Year). '+
+    'Full period assumed to benefit from shelf moves from day one — ceiling timing assumption. '+
+    (R.isPartial?'Current period data normalized to full-half run rate via linear extrapolation; seasonal variance not accounted for. ':'')+
+    'All excluded variables (compliance, facings, competitive context) bias results toward overstatement — treat as ceiling estimates.'+
+  '</div>';
+
   cont.innerHTML=html;
 }
 
@@ -528,8 +645,8 @@ function switchTab(i){
 // ── Clear ─────────────────────────────────────────────────────────────────────
 function clearAll(){
   if(!confirm('Clear all SKU data and reset settings?')) return;
-  SKUS.forEach(s=>{s.name='';s.h1ly='';s.h2ly='';s.h1cy='';});
-  gv('g-diy').value='365'; gv('g-dnl').value='60';
+  SKUS.forEach(s=>{s.name='';s.h1ly='';s.h2ly='';s.h1cy='';s.h2cy='';});
+  gv('g-dh1').value='182'; gv('g-dh2').value='183'; gv('g-del').value='';
   buildSkuRows(); recalc();
 }
 
