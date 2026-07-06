@@ -6,436 +6,130 @@
 <title>Shelf Position Impact Calculator</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --berry:  #5C1F38;
-    --berryL: #7A2E4E;
-    --rose:   #A26769;
-    --cream:  #F8F2EC;
-    --sand:   #EDD5D0;
-    --muted:  #7A5C62;
-    --dark:   #2C1810;
-    --white:  #FFFFFF;
-    --green:  #1A6B3C;
+    --berry:  #5C1F38; --berryL: #7A2E4E; --rose: #A26769;
+    --cream:  #F8F2EC; --sand:   #EDD5D0; --muted: #7A5C62;
+    --dark:   #2C1810; --white:  #FFFFFF; --green: #1A6B3C;
   }
+  body { font-family: Calibri, Arial, sans-serif; background: var(--cream); color: var(--dark); min-height: 100vh; }
 
-  body {
-    font-family: Calibri, Arial, sans-serif;
-    background: var(--cream);
-    color: var(--dark);
-    min-height: 100vh;
-  }
-
-  /* ── Header ── */
-  #header {
-    background: var(--berry);
-    padding: 16px 24px 0;
-  }
-  #header .eyebrow {
-    font-size: 9px;
-    letter-spacing: 3px;
-    color: #C09AAA;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-  #header .title-row {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-  }
-  #header h1 {
-    font-size: 20px;
-    font-weight: bold;
-    color: var(--white);
-  }
-  #header .security-note {
-    font-size: 11px;
-    color: #C09AAA;
-    font-style: italic;
-  }
+  /* Header */
+  #header { background: var(--berry); padding: 16px 24px 0; }
+  .eyebrow { font-size: 9px; letter-spacing: 3px; color: #C09AAA; text-transform: uppercase; margin-bottom: 4px; }
+  .title-row { display: flex; align-items: baseline; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+  .title-row h1 { font-size: 20px; font-weight: bold; color: var(--white); }
+  .sec-note { font-size: 11px; color: #C09AAA; font-style: italic; }
   .tab-bar { display: flex; gap: 4px; }
-  .tab-btn {
-    background: transparent;
-    color: #E8C8D0;
-    border: none;
-    padding: 7px 18px;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    border-radius: 6px 6px 0 0;
-    transition: background 0.15s, color 0.15s;
-  }
-  .tab-btn.active {
-    background: var(--cream);
-    color: var(--berry);
-    font-weight: bold;
-  }
+  .tab-btn { background: transparent; color: #E8C8D0; border: none; padding: 7px 18px; font-size: 13px; font-family: inherit; cursor: pointer; border-radius: 6px 6px 0 0; transition: background .15s, color .15s; }
+  .tab-btn.active { background: var(--cream); color: var(--berry); font-weight: bold; }
 
-  /* ── Content ── */
+  /* Content */
   #content { padding: 20px 24px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* ── Cards / Boxes ── */
-  .card {
-    background: var(--white);
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(92,31,56,0.1);
-  }
-  .card-hd {
-    padding: 12px 16px;
-    font-size: 14px;
-    font-weight: bold;
-    color: var(--white);
-    border-radius: 8px 8px 0 0;
-  }
-
-  /* ── Inputs ── */
+  /* Inputs */
   input[type="text"], input[type="number"] {
-    border: 1px solid var(--rose);
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 13px;
-    font-family: inherit;
-    background: var(--white);
-    color: var(--dark);
-    outline: none;
-    width: 100%;
+    border: 1px solid var(--rose); border-radius: 6px; padding: 4px 8px;
+    font-size: 13px; font-family: inherit; background: var(--white);
+    color: var(--dark); outline: none; width: 100%;
   }
   input[type="number"] { text-align: right; }
   input:focus { border-color: var(--berry); }
 
-  /* ── Buttons ── */
-  .btn-primary {
-    background: var(--berry);
-    border: none;
-    color: var(--white);
-    border-radius: 6px;
-    padding: 7px 18px;
-    cursor: pointer;
-    font-size: 13px;
-    font-family: inherit;
-  }
-  .btn-secondary {
-    background: transparent;
-    border: 1px solid var(--rose);
-    color: var(--rose);
-    border-radius: 6px;
-    padding: 7px 18px;
-    cursor: pointer;
-    font-size: 13px;
-    font-family: inherit;
-  }
-  .btn-primary:hover { background: var(--berryL); }
-  .btn-secondary:hover { background: var(--sand); }
+  /* Buttons */
+  .btn-p { background: var(--berry); border: none; color: var(--white); border-radius: 6px; padding: 7px 18px; cursor: pointer; font-size: 13px; font-family: inherit; }
+  .btn-s { background: transparent; border: 1px solid var(--rose); color: var(--rose); border-radius: 6px; padding: 7px 18px; cursor: pointer; font-size: 13px; font-family: inherit; }
+  .btn-p:hover { background: var(--berryL); }
+  .btn-s:hover { background: var(--sand); }
 
-  /* ── Settings row ── */
-  .settings-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  .setting-card {
-    background: var(--white);
-    border-radius: 8px;
-    padding: 14px;
-    flex: 1 1 150px;
-    box-shadow: 0 1px 4px rgba(92,31,56,0.1);
-  }
-  .setting-card.dark {
-    background: var(--berry);
-    color: var(--white);
-  }
-  .setting-card label {
-    display: block;
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  .setting-card.dark label { color: #C09AAA; }
-  .setting-card .big-val {
-    font-size: 22px;
-    font-weight: bold;
-    color: var(--berry);
-  }
-  .setting-card.dark .big-val { color: var(--white); }
-  .setting-card .tip {
-    font-size: 10px;
-    color: var(--rose);
-    margin-top: 4px;
-  }
-  .setting-card.dark .tip { color: #E8C8D0; }
-  .setting-card input {
-    font-size: 20px;
-    font-weight: bold;
-    color: var(--berry);
-    border-color: rgba(162,103,105,0.4);
-  }
+  /* Settings */
+  .settings-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .set-card { background: var(--white); border-radius: 8px; padding: 14px; flex: 1 1 160px; box-shadow: 0 1px 4px rgba(92,31,56,.1); }
+  .set-card.dark { background: var(--berry); color: var(--white); }
+  .set-card label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .set-card.dark label { color: #C09AAA; }
+  .set-card .bigval { font-size: 22px; font-weight: bold; color: var(--berry); }
+  .set-card.dark .bigval { color: var(--white); }
+  .set-card .tip { font-size: 10px; color: var(--rose); margin-top: 4px; }
+  .set-card.dark .tip { color: #E8C8D0; }
+  .set-card input { font-size: 20px; font-weight: bold; color: var(--berry); border-color: rgba(162,103,105,.4); }
 
-  /* ── SKU Table ── */
-  .sku-table-wrap {
-    background: var(--white);
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(92,31,56,0.1);
-  }
-  .sku-header {
-    background: var(--berry);
-    color: var(--white);
-    display: grid;
-    grid-template-columns: 2fr 1.4fr 1.4fr 1fr 1fr;
-    gap: 8px;
-    padding: 10px 16px;
-    font-size: 12px;
-    font-weight: bold;
-  }
-  .sku-header div, .sku-row div { }
-  .sku-header .right, .sku-row .right { text-align: right; }
-  .sku-row {
-    display: grid;
-    grid-template-columns: 2fr 1.4fr 1.4fr 1fr 1fr;
-    gap: 8px;
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--cream);
-    align-items: center;
-  }
-  .sku-row .derived {
-    text-align: right;
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .sku-total-row {
-    display: grid;
-    grid-template-columns: 2fr 1.4fr 1.4fr 1fr 1fr;
-    gap: 8px;
-    padding: 10px 16px;
-    background: var(--cream);
-    font-weight: bold;
-    font-size: 13px;
-    color: var(--berry);
-  }
-  .sku-total-row .right { text-align: right; }
+  /* SKU Table */
+  .tbl-wrap { background: var(--white); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(92,31,56,.1); margin-bottom: 14px; }
+  .tbl-hd { background: var(--berry); color: var(--white); display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1.2fr; gap: 6px; padding: 10px 14px; font-size: 11px; font-weight: bold; }
+  .tbl-hd .right, .tbl-row .right, .tbl-tot .right { text-align: right; }
+  .tbl-hd .proj-hd { text-align: right; color: var(--sand); font-style: italic; }
+  .tbl-row { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1.2fr; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--cream); align-items: center; }
+  .proj-cell { text-align: right; font-size: 13px; color: var(--rose); font-style: italic; }
+  .tbl-tot { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1.2fr; gap: 6px; padding: 10px 14px; background: var(--cream); font-weight: bold; font-size: 13px; color: var(--berry); }
+  .tbl-note { padding: 6px 14px 10px; font-size: 10px; color: var(--muted); font-style: italic; }
 
-  /* ── Scenario grid ── */
-  .sc-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-  @media (max-width: 800px) { .sc-grid { grid-template-columns: 1fr; } }
-  .sc-card { background: var(--white); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(92,31,56,0.12); }
+  /* Scenario cards */
+  .sc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  @media(max-width:800px){ .sc-grid { grid-template-columns:1fr; } }
+  .sc-card { background: var(--white); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(92,31,56,.12); }
   .sc-hd { padding: 12px 16px; }
-  .sc-hd input[type="text"] {
-    background: transparent;
-    border: none;
-    color: var(--white);
-    font-size: 14px;
-    font-weight: bold;
-    outline: none;
-    border-bottom: 1px solid rgba(255,255,255,0.3);
-    border-radius: 0;
-    padding: 2px 0;
-  }
-  .sc-lift-display {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-top: 8px;
-  }
-  .sc-lift-label { font-size: 11px; color: rgba(255,255,255,0.7); }
+  .sc-hd input[type="text"] { background: transparent; border: none; color: var(--white); font-size: 14px; font-weight: bold; outline: none; border-bottom: 1px solid rgba(255,255,255,.3); border-radius: 0; padding: 2px 0; }
+  .sc-lift-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
+  .sc-lift-lbl { font-size: 11px; color: rgba(255,255,255,.7); }
   .sc-lift-val { font-size: 26px; font-weight: bold; color: var(--white); }
-  .sc-warning {
-    background: #B91C1C;
-    border-radius: 4px;
-    padding: 2px 8px;
-    margin-top: 4px;
-    font-size: 11px;
-    color: var(--white);
-    display: none;
-  }
   .sc-body { padding: 16px; }
-  .sc-section-label {
-    font-size: 11px;
-    font-weight: bold;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .move-block {
-    background: var(--cream);
-    border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 10px;
-  }
-  .move-block-title { font-size: 12px; font-weight: bold; color: var(--berry); margin-bottom: 8px; }
-  .move-inputs { display: flex; gap: 8px; }
-  .move-inputs > div { flex: 1; }
-  .move-inputs label { font-size: 10px; color: var(--muted); display: block; margin-bottom: 2px; }
-  .sc-summary-line {
-    display: flex;
-    justify-content: space-between;
-    padding: 7px 10px;
-    background: var(--cream);
-    border-radius: 6px;
-    margin-bottom: 4px;
-    font-size: 12px;
-  }
-  .sc-summary-line .val { font-weight: bold; color: var(--berry); }
-  .sc-summary-line .val.over { color: #B91C1C; }
-  .sc-summary-line .val-dim { color: var(--muted); }
-  input[type="range"] {
-    -webkit-appearance: none; appearance: none;
-    width: 100%; height: 4px; border-radius: 2px;
-    background: var(--sand); outline: none; border: none;
-    padding: 0; margin: 6px 0 2px; cursor: pointer;
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none;
-    width: 16px; height: 16px; border-radius: 50%;
-    background: var(--berry); cursor: pointer;
-    border: 2px solid var(--white);
-    box-shadow: 0 1px 3px rgba(92,31,56,0.4);
-  }
-  input[type="range"]::-moz-range-thumb {
-    width: 16px; height: 16px; border-radius: 50%;
-    background: var(--berry); cursor: pointer;
-    border: 2px solid var(--white);
-    box-shadow: 0 1px 3px rgba(92,31,56,0.4);
-  }
-  .slider-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-  .slider-row input[type="range"] { flex: 1; margin: 0; }
-  .slider-row input[type="number"] { width: 58px; flex-shrink: 0; font-size: 13px; }
-  /* dark bg slider track override */
-  #sc-master-slider-0, #sc-master-slider-1, #sc-master-slider-2 {
-    background: rgba(255,255,255,0.25);
-  }
-  #sc-master-slider-0::-webkit-slider-thumb,
-  #sc-master-slider-1::-webkit-slider-thumb,
-  #sc-master-slider-2::-webkit-slider-thumb { background: var(--white); }
-  #sc-master-slider-0::-moz-range-thumb,
-  #sc-master-slider-1::-moz-range-thumb,
-  #sc-master-slider-2::-moz-range-thumb { background: var(--white); }
+  .sc-sec-lbl { font-size: 11px; font-weight: bold; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+  .move-block { background: var(--cream); border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+  .move-title { font-size: 12px; font-weight: bold; color: var(--berry); margin-bottom: 8px; }
+  .move-row { display: flex; gap: 8px; }
+  .move-row > div { flex: 1; }
+  .move-row label { font-size: 10px; color: var(--muted); display: block; margin-bottom: 2px; }
+  .sc-warning { background: #B91C1C; border-radius: 4px; padding: 2px 8px; margin-top: 4px; font-size: 11px; color: var(--white); display: none; }
+  /* Master slider panel */
+  .master-panel { margin-top: 14px; padding: 12px; background: var(--berry); border-radius: 8px; }
+  .master-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .master-lbl { font-size: 11px; color: rgba(255,255,255,.75); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+  .master-val { font-size: 22px; font-weight: bold; color: var(--white); }
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  .slider-row input[type="number"] { width: 58px; flex-shrink: 0; font-size: 13px; background: rgba(255,255,255,.15); color: var(--white); border-color: rgba(255,255,255,.35); }
+  input[type="range"] { -webkit-appearance: none; appearance: none; flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.25); outline: none; border: none; padding: 0; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--white); cursor: pointer; border: 2px solid var(--berry); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--white); cursor: pointer; border: 2px solid var(--berry); }
+  .split-note { margin-top: 8px; font-size: 11px; color: rgba(255,255,255,.6); }
 
-  /* ── Results ── */
-  .metrics-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  .metric-card {
-    background: var(--white);
-    border-radius: 8px;
-    padding: 12px 16px;
-    flex: 1 1 150px;
-    box-shadow: 0 1px 4px rgba(92,31,56,0.1);
-  }
-  .metric-card.dark { background: var(--berry); color: var(--white); }
-  .metric-card .m-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
-  .metric-card.dark .m-label { color: #C09AAA; }
-  .metric-card .m-val { font-size: 20px; font-weight: bold; }
-  .metric-card .m-sub { font-size: 10px; color: var(--rose); margin-top: 2px; }
-  .metric-card.dark .m-sub { color: #E8C8D0; }
-
-  /* ── Comparison table ── */
-  .cmp-table-wrap {
-    background: var(--white);
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(92,31,56,0.1);
-  }
-  .cmp-table-hd {
-    background: var(--berry);
-    color: var(--white);
-    padding: 12px 16px;
-    font-size: 14px;
-    font-weight: bold;
-  }
+  /* Results */
+  .metrics-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .met-card { background: var(--white); border-radius: 8px; padding: 12px 16px; flex: 1 1 150px; box-shadow: 0 1px 4px rgba(92,31,56,.1); }
+  .met-card.dark { background: var(--berry); color: var(--white); }
+  .met-lbl { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .met-card.dark .met-lbl { color: #C09AAA; }
+  .met-val { font-size: 20px; font-weight: bold; }
+  .met-sub { font-size: 10px; color: var(--rose); margin-top: 2px; }
+  .met-card.dark .met-sub { color: #E8C8D0; }
+  .cmp-wrap { background: var(--white); border-radius: 8px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(92,31,56,.1); }
+  .cmp-hd { background: var(--berry); color: var(--white); padding: 12px 16px; font-size: 14px; font-weight: bold; }
   table { width: 100%; border-collapse: collapse; }
-  th { font-weight: bold; }
   td, th { padding: 8px 12px; font-size: 13px; }
-  .t-left { text-align: left; }
-  .t-right { text-align: right; }
-  .t-muted { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-  .t-section td {
-    background: var(--sand);
-    font-size: 11px;
-    font-weight: bold;
-    color: var(--berry);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 6px 12px;
-  }
-  .t-highlight { background: #EDD5D0 !important; }
-  .t-highlight td { font-size: 15px !important; font-weight: bold !important; color: var(--berry) !important; }
-  .t-dim td.val-cell { color: var(--muted) !important; }
-  .t-bold td.val-cell { font-weight: bold !important; }
-  .t-green td.val-cell { color: var(--green) !important; font-weight: bold !important; }
+  .tl { text-align: left; } .tr { text-align: right; }
+  .t-section td { background: var(--sand); font-size: 11px; font-weight: bold; color: var(--berry); text-transform: uppercase; letter-spacing: 1px; padding: 6px 12px; }
+  .t-hi { background: #EDD5D0 !important; }
+  .t-hi td { font-size: 15px !important; font-weight: bold !important; color: var(--berry) !important; }
   tr:nth-child(even) { background: #FDFAF8; }
   tr.t-section:nth-child(even) { background: var(--sand); }
-
-  /* ── SKU detail tables ── */
-  .sku-detail-wrap {
-    background: var(--white);
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 4px rgba(92,31,56,0.1);
-  }
-  .sku-detail-hd {
-    padding: 10px 16px;
-    font-size: 13px;
-    font-weight: bold;
-    color: var(--white);
-    border-radius: 8px 8px 0 0;
-  }
-  .sku-detail-hd.sc0 { background: var(--berry); }
-  .sku-detail-hd.sc1 { background: var(--berryL); }
-  .sku-detail-hd.sc2 { background: var(--rose); }
-
-  /* ── Misc ── */
+  .det-wrap { background: var(--white); border-radius: 8px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(92,31,56,.1); }
+  .det-hd { padding: 10px 16px; font-size: 13px; font-weight: bold; color: var(--white); }
+  .det-hd.s0 { background: var(--berry); } .det-hd.s1 { background: var(--berryL); } .det-hd.s2 { background: var(--rose); }
+  .footnote { padding: 12px 16px; background: var(--white); border-radius: 8px; font-size: 11px; color: var(--muted); font-style: italic; box-shadow: 0 1px 4px rgba(92,31,56,.08); margin-top: 4px; }
   .row-btns { margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
-  .no-data {
-    background: var(--white);
-    border-radius: 8px;
-    padding: 48px;
-    text-align: center;
-    color: var(--muted);
-  }
+  .no-data { background: var(--white); border-radius: 8px; padding: 48px; text-align: center; color: var(--muted); }
   .no-data h2 { font-size: 22px; color: var(--berry); margin-bottom: 8px; }
   .no-data p { font-size: 14px; margin-bottom: 20px; }
-  .footnote {
-    padding: 12px 16px;
-    background: var(--white);
-    border-radius: 8px;
-    font-size: 11px;
-    color: var(--muted);
-    font-style: italic;
-    box-shadow: 0 1px 4px rgba(92,31,56,0.08);
-    margin-top: 4px;
-  }
-  @media (max-width: 700px) {
-    .sku-header, .sku-row, .sku-total-row {
-      grid-template-columns: 2fr 1fr 1fr;
-    }
-    .sku-header .hide-mobile, .sku-row .hide-mobile, .sku-total-row .hide-mobile { display: none; }
-    .settings-row { flex-direction: column; }
-  }
 </style>
 </head>
 <body>
 
-<!-- ── HEADER ──────────────────────────────────────────────────────────────── -->
 <div id="header">
   <div class="eyebrow">Shelf Impact Model</div>
   <div class="title-row">
-    <h1>Shelf Position Calculator</h1>
-    <span class="security-note">All data is in-memory only — nothing stored or transmitted</span>
+    <h1>Shelf Position Impact Calculator</h1>
+    <span class="sec-note">All data is in-memory only — nothing stored or transmitted</span>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab(0)">① Data Entry</button>
@@ -444,74 +138,63 @@
   </div>
 </div>
 
-<!-- ── CONTENT ─────────────────────────────────────────────────────────────── -->
 <div id="content">
 
-  <!-- ── TAB 0: DATA ENTRY ──────────────────────────────────────────────────── -->
+  <!-- TAB 0: DATA ENTRY -->
   <div class="tab-panel active" id="panel-0">
-
-    <div class="settings-row" id="settings-row">
-      <div class="setting-card">
-        <label>On-Premise %</label>
-        <input type="number" id="g-op" value="10" min="0" max="100" step="1" oninput="recalc()">
-        <div class="tip">Removed from all case volumes before any math</div>
+    <div class="settings-row">
+      <div class="set-card">
+        <label>Days in Year</label>
+        <input type="number" id="g-diy" value="365" min="1" max="366" step="1" oninput="recalc()">
+        <div class="tip">Use 365 or 366 for leap year. Drives H2 length and lift timing precision.</div>
       </div>
-      <div class="setting-card">
-        <label>H1 / Full-Year Split %</label>
-        <input type="number" id="g-h1split" value="47.8" min="1" max="99" step="0.1" oninput="recalc()">
-        <div class="tip">What % of prior full year fell in H1</div>
+      <div class="set-card">
+        <label>Days Before Lift Active</label>
+        <input type="number" id="g-dnl" value="60" min="0" step="1" oninput="recalc()">
+        <div class="tip">How many days into H2 before shelf sets are complete</div>
       </div>
-      <div class="setting-card">
-        <label>H2 Total Months</label>
-        <input type="number" id="g-h2total" value="6" min="1" max="12" step="1" oninput="recalc()">
-        <div class="tip">Normally 6</div>
-      </div>
-      <div class="setting-card">
-        <label>Months Before Lift Active</label>
-        <input type="number" id="g-nolift" value="2" min="0" max="12" step="1" oninput="recalc()">
-        <div class="tip">Time to complete all shelf sets</div>
-      </div>
-      <div class="setting-card dark" id="decline-card" style="display:none;">
+      <div class="set-card dark" id="decline-card" style="display:none">
         <label>Derived Decline Rate</label>
-        <div class="big-val" id="decline-val">—</div>
-        <div class="tip">Auto-calculated from your data</div>
+        <div class="bigval" id="decline-val">—</div>
+        <div class="tip">H1 Current Year ÷ H1 Last Year − 1. No assumptions — uses your actual data.</div>
       </div>
     </div>
 
-    <div class="sku-table-wrap">
-      <div class="sku-header">
+    <div class="tbl-wrap">
+      <div class="tbl-hd">
         <div>SKU Name</div>
-        <div class="right">2025 Gross Cases</div>
-        <div class="right">H1 2026 Gross Cases</div>
-        <div class="right hide-mobile">2025 Off-Prem</div>
-        <div class="right hide-mobile">H1 2026 Off-Prem</div>
+        <div class="right">H1 Last Year</div>
+        <div class="right">H2 Last Year</div>
+        <div class="right">H1 Current Year</div>
+        <div class="proj-hd">H2 Projected *</div>
       </div>
       <div id="sku-rows"></div>
-      <div class="sku-total-row">
+      <div class="tbl-tot">
         <div>TOTAL</div>
-        <div class="right" id="tot-g2025">—</div>
-        <div class="right" id="tot-h126">—</div>
-        <div class="right hide-mobile" id="tot-op25">—</div>
-        <div class="right hide-mobile" id="tot-h126op">—</div>
+        <div class="right" id="tot-h1ly">—</div>
+        <div class="right" id="tot-h2ly">—</div>
+        <div class="right" id="tot-h1cy">—</div>
+        <div class="right" id="tot-h2proj" style="color:var(--rose);font-style:italic">—</div>
       </div>
+      <div class="tbl-note">* H2 Projected = H2 Last Year × (1 + derived decline rate). Empty rows are excluded from all calculations.</div>
     </div>
 
     <div class="row-btns">
-      <button class="btn-secondary" onclick="clearAll()">Clear All</button>
-      <button class="btn-primary" onclick="switchTab(1)">Next: Scenarios →</button>
+      <button class="btn-s" onclick="clearAll()">Clear All</button>
+      <button class="btn-p" onclick="switchTab(1)">Next: Scenarios →</button>
     </div>
   </div>
 
-  <!-- ── TAB 1: SCENARIOS ───────────────────────────────────────────────────── -->
+  <!-- TAB 1: SCENARIOS -->
   <div class="tab-panel" id="panel-1">
     <div class="sc-grid" id="sc-grid"></div>
     <div class="row-btns">
-      <button class="btn-secondary" onclick="switchTab(0)">← Data Entry</button>
-      <button class="btn-primary" onclick="switchTab(2)">View Results →</button>
+      <button class="btn-s" onclick="switchTab(0)">← Data Entry</button>
+      <button class="btn-p" onclick="switchTab(2)">View Results →</button>
     </div>
   </div>
 
-  <!-- ── TAB 2: RESULTS ─────────────────────────────────────────────────────── -->
+  <!-- TAB 2: RESULTS -->
   <div class="tab-panel" id="panel-2">
     <div id="results-inner"></div>
   </div>
@@ -519,49 +202,21 @@
 </div>
 
 <script>
-// ── State ────────────────────────────────────────────────────────────────────
-const SKUS = Array.from({length:15}, (_,i) => ({ id:i, name:'', g2025:'', h126:'' }));
+const SKUS = Array.from({length:25}, (_,i) => ({id:i, name:'', h1ly:'', h2ly:'', h1cy:''}));
+
+const HD = ['#5C1F38','#7A2E4E','#A26769'];
 
 const SCENARIOS = [
-  { name:'Scenario A — Most Optimistic', masterPct:75, kneeArm:33, kneeEye:33, footArm:34, liftKA:10, liftKE:63, liftFA:43 },
-  { name:'Scenario B — Moderate',        masterPct:50, kneeArm:26, kneeEye:24, footArm:50, liftKA:10, liftKE:63, liftFA:43 },
-  { name:'Scenario C — Conservative',    masterPct:25, kneeArm:40, kneeEye:20, footArm:40, liftKA:10, liftKE:63, liftFA:43 },
+  {name:'Scenario A — Most Optimistic', masterPct:75, kneeArm:33, kneeEye:33, footArm:34, footEye:0, liftKA:10, liftKE:63, liftFA:43, liftFE:78},
+  {name:'Scenario B — Moderate',        masterPct:50, kneeArm:26, kneeEye:24, footArm:50, footEye:0, liftKA:10, liftKE:63, liftFA:43, liftFE:78},
+  {name:'Scenario C — Conservative',    masterPct:25, kneeArm:40, kneeEye:20, footArm:40, footEye:0, liftKA:10, liftKE:63, liftFA:43, liftFE:78},
 ];
 
-const HD_COLORS = ['#5C1F38','#7A2E4E','#A26769'];
-
-// ── Utilities ────────────────────────────────────────────────────────────────
-const gv = id => document.getElementById(id);
-
-function syncFromSlider(si, pf, slidId, numId) {
-  const val = parseFloat(gv(slidId).value) || 0;
-  gv(numId).value = val;
-  SCENARIOS[si][pf] = val;
-  updateScenarioDisplay(si);
-  recalc();
-}
-function syncFromNum(si, pf, slidId, numId) {
-  const val = parseFloat(gv(numId).value) || 0;
-  gv(slidId).value = val;
-  SCENARIOS[si][pf] = val;
-  updateScenarioDisplay(si);
-  recalc();
-}
-
-function syncMaster(si, source, val) {
-  const v = Math.min(100, Math.max(0, parseFloat(val) || 0));
-  SCENARIOS[si].masterPct = v;
-  if (source === 'slider') gv(`sc-master-num-${si}`).value = v;
-  else gv(`sc-master-slider-${si}`).value = v;
-  const disp = gv(`sc-masterpct-disp-${si}`);
-  if (disp) disp.textContent = v + '%';
-  updateScenarioDisplay(si);
-  recalc();
-}
-const num = v => parseFloat(v) || 0;
-const fmtN = n => (!n || isNaN(n)) ? '—' : Math.round(Math.abs(n)).toLocaleString();
-const fmtPos = n => (!n || isNaN(n)) ? '—' : '+' + Math.round(n).toLocaleString();
-const pct = n => isNaN(n) ? '—' : (n>=0?'+':'−') + Math.abs(n).toFixed(1) + '%';
+const gv  = id => document.getElementById(id);
+const num = v  => parseFloat(v) || 0;
+const fmtN   = n => (!n||isNaN(n)) ? '—' : Math.round(Math.abs(n)).toLocaleString();
+const fmtPos = n => (!n||isNaN(n)) ? '—' : '+'+Math.round(n).toLocaleString();
+const pct    = n => isNaN(n) ? '—' : (n>=0?'+':'−')+Math.abs(n).toFixed(1)+'%';
 
 // ── Build SKU rows ────────────────────────────────────────────────────────────
 function buildSkuRows() {
@@ -569,15 +224,17 @@ function buildSkuRows() {
   cont.innerHTML = '';
   SKUS.forEach(s => {
     const row = document.createElement('div');
-    row.className = 'sku-row';
-    row.id = `sku-row-${s.id}`;
-    row.innerHTML = `
-      <div><input type="text" id="sn-${s.id}" value="${s.name}" placeholder="SKU ${s.id+1}" oninput="SKUS[${s.id}].name=this.value"></div>
-      <div><input type="number" id="sg-${s.id}" value="${s.g2025}" placeholder="0" min="0" oninput="SKUS[${s.id}].g2025=this.value;recalc()"></div>
-      <div><input type="number" id="sh-${s.id}" value="${s.h126}" placeholder="0" min="0" oninput="SKUS[${s.id}].h126=this.value;recalc()"></div>
-      <div class="derived hide-mobile" id="sd-op-${s.id}">—</div>
-      <div class="derived hide-mobile" id="sd-h1-${s.id}">—</div>
-    `;
+    row.className = 'tbl-row';
+    row.innerHTML =
+      '<div><input type="text" value="'+s.name+'" placeholder="SKU '+(s.id+1)+'" '+
+        'oninput="SKUS['+s.id+'].name=this.value"></div>'+
+      '<div><input type="number" value="'+s.h1ly+'" placeholder="0" min="0" '+
+        'oninput="SKUS['+s.id+'].h1ly=this.value;recalc()"></div>'+
+      '<div><input type="number" value="'+s.h2ly+'" placeholder="0" min="0" '+
+        'oninput="SKUS['+s.id+'].h2ly=this.value;recalc()"></div>'+
+      '<div><input type="number" value="'+s.h1cy+'" placeholder="0" min="0" '+
+        'oninput="SKUS['+s.id+'].h1cy=this.value;recalc()"></div>'+
+      '<div class="proj-cell" id="proj-'+s.id+'">—</div>';
     cont.appendChild(row);
   });
 }
@@ -589,311 +246,275 @@ function buildScenarios() {
   SCENARIOS.forEach((sc, i) => {
     const card = document.createElement('div');
     card.className = 'sc-card';
-    card.innerHTML = `
-      <div class="sc-hd" style="background:${HD_COLORS[i]}">
-        <input type="text" id="sc-name-${i}" value="${sc.name}" oninput="SCENARIOS[${i}].name=this.value;updateScenarioDisplay(${i})">
-        <div class="sc-lift-display">
-          <span class="sc-lift-label">Net lift on all volume</span>
-          <span class="sc-lift-val" id="sc-netlift-${i}">+0.00%</span>
-        </div>
-      </div>
-      <div class="sc-body">
-        <div class="sc-section-label">Shelf Move Configuration</div>
-        ${buildMoveBlock(i,'Knee → Arm','kneeArm','liftKA')}
-        ${buildMoveBlock(i,'Knee → Eye','kneeEye','liftKE')}
-        ${buildMoveBlock(i,'Foot → Arm','footArm','liftFA')}
-        <div style="margin-top:14px;padding:12px;background:var(--berry);border-radius:8px">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-            <span style="font-size:11px;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px;font-weight:bold">Total % of Volume Moving</span>
-            <span id="sc-masterpct-disp-${i}" style="font-size:22px;font-weight:bold;color:white">${sc.masterPct}%</span>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sc-master-slider-${i}" value="${sc.masterPct}" min="0" max="100" step="1"
-              oninput="syncMaster(${i},'slider',this.value)">
-            <input type="number" id="sc-master-num-${i}" value="${sc.masterPct}" min="0" max="100" step="1"
-              oninput="syncMaster(${i},'num',this.value)"
-              style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.35);width:58px">
-          </div>
-          <div style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.6)">
-            Split breakdown: <span id="sc-split-disp-${i}">${sc.kneeArm+sc.kneeEye+sc.footArm}% allocated</span>
-          </div>
-          <div id="sc-warn-${i}" class="sc-warning">⚠ Split total exceeds 100% — reduce individual allocations</div>
-        </div>
-      </div>
-    `;
+    card.innerHTML =
+      '<div class="sc-hd" style="background:'+HD[i]+'">'+
+        '<input type="text" value="'+sc.name+'" '+
+          'oninput="SCENARIOS['+i+'].name=this.value">'+
+        '<div class="sc-lift-row">'+
+          '<span class="sc-lift-lbl">Net lift on all volume</span>'+
+          '<span class="sc-lift-val" id="sc-netlift-'+i+'">+0.00%</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="sc-body">'+
+        '<div class="sc-sec-lbl">Shelf Move Configuration</div>'+
+        buildMoveBlock(i,'Knee → Arm','kneeArm','liftKA')+
+        buildMoveBlock(i,'Knee → Eye','kneeEye','liftKE')+
+        buildMoveBlock(i,'Foot → Arm','footArm','liftFA')+
+        buildMoveBlock(i,'Foot → Eye','footEye','liftFE')+
+        '<div class="master-panel">'+
+          '<div class="master-top">'+
+            '<span class="master-lbl">Total % of Volume Moving</span>'+
+            '<span class="master-val" id="sc-mpct-'+i+'">'+sc.masterPct+'%</span>'+
+          '</div>'+
+          '<div class="slider-row">'+
+            '<input type="range" id="sc-mslider-'+i+'" value="'+sc.masterPct+'" min="0" max="100" step="1" '+
+              'oninput="syncMaster('+i+',\'slider\',this.value)">'+
+            '<input type="number" id="sc-mnum-'+i+'" value="'+sc.masterPct+'" min="0" max="100" step="1" '+
+              'oninput="syncMaster('+i+',\'num\',this.value)">'+
+          '</div>'+
+          '<div class="split-note">Split: <span id="sc-split-'+i+'">'+
+            (sc.kneeArm+sc.kneeEye+sc.footArm)+'% allocated</span></div>'+
+          '<div class="sc-warning" id="sc-warn-'+i+'">⚠ Split exceeds 100% — reduce individual allocations</div>'+
+        '</div>'+
+      '</div>';
     grid.appendChild(card);
   });
-  SCENARIOS.forEach((_,i) => updateScenarioDisplay(i));
+  SCENARIOS.forEach((_,i) => updateSc(i));
 }
 
 function buildMoveBlock(si, label, pf, lf) {
   const sc = SCENARIOS[si];
-  return `
-    <div class="move-block">
-      <div class="move-block-title">${label}</div>
-      <div style="margin-bottom:8px">
-        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Share of Moving Volume %</label>
-        <input type="number" value="${sc[pf]}" min="0" max="100" step="1" style="width:100%"
-          oninput="SCENARIOS[${si}].${pf}=parseFloat(this.value)||0;updateScenarioDisplay(${si});recalc()">
-      </div>
-      <div>
-        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Lift %</label>
-        <input type="number" value="${sc[lf]}" min="0" step="1" style="width:100%"
-          oninput="SCENARIOS[${si}].${lf}=parseFloat(this.value)||0;updateScenarioDisplay(${si});recalc()">
-      </div>
-    </div>
-  `;
+  return '<div class="move-block">'+
+    '<div class="move-title">'+label+'</div>'+
+    '<div class="move-row">'+
+      '<div>'+
+        '<label>Share of Moving Volume %</label>'+
+        '<input type="number" value="'+sc[pf]+'" min="0" max="100" step="1" '+
+          'oninput="SCENARIOS['+si+'].'+pf+'=parseFloat(this.value)||0;updateSc('+si+');recalc()">'+
+      '</div>'+
+      '<div>'+
+        '<label>Lift %</label>'+
+        '<input type="number" value="'+sc[lf]+'" min="0" step="1" '+
+          'oninput="SCENARIOS['+si+'].'+lf+'=parseFloat(this.value)||0;updateSc('+si+');recalc()">'+
+      '</div>'+
+    '</div>'+
+  '</div>';
 }
 
-function updateScenarioDisplay(i) {
+function updateSc(i) {
   const sc = SCENARIOS[i];
-  const net = (sc.masterPct/100) * (
-    (sc.kneeArm/100)*(sc.liftKA/100)
-  + (sc.kneeEye/100)*(sc.liftKE/100)
-  + (sc.footArm/100)*(sc.liftFA/100)
+  const net = (sc.masterPct/100)*(
+    (sc.kneeArm/100)*(sc.liftKA/100)+
+    (sc.kneeEye/100)*(sc.liftKE/100)+
+    (sc.footArm/100)*(sc.liftFA/100)+
+    (sc.footEye/100)*(sc.liftFE/100)
   );
-  const splitTotal = sc.kneeArm + sc.kneeEye + sc.footArm;
-  const over = splitTotal > 100;
+  const split = sc.kneeArm+sc.kneeEye+sc.footArm+sc.footEye;
+  const over  = split>100;
+  const nl=gv('sc-netlift-'+i); if(nl) nl.textContent='+'+( net*100).toFixed(2)+'%';
+  const sd=gv('sc-split-'+i);   if(sd){ sd.textContent=split+'% allocated'; sd.style.color=over?'#FCA5A5':'rgba(255,255,255,.6)'; }
+  const wn=gv('sc-warn-'+i);    if(wn) wn.style.display=over?'block':'none';
+}
 
-  const nl = gv(`sc-netlift-${i}`);
-  if (nl) nl.textContent = '+' + (net*100).toFixed(2) + '%';
-
-  const sd = gv(`sc-split-disp-${i}`);
-  if (sd) { sd.textContent = splitTotal + '% allocated'; sd.style.color = over ? '#FCA5A5' : 'rgba(255,255,255,0.6)'; }
-
-  const wn = gv(`sc-warn-${i}`);
-  if (wn) wn.style.display = over ? 'block' : 'none';
+function syncMaster(si, src, val) {
+  const v=Math.min(100,Math.max(0,parseFloat(val)||0));
+  SCENARIOS[si].masterPct=v;
+  if(src==='slider') gv('sc-mnum-'+si).value=v;
+  else gv('sc-mslider-'+si).value=v;
+  const d=gv('sc-mpct-'+si); if(d) d.textContent=v+'%';
+  updateSc(si); recalc();
 }
 
 // ── Core calculation ──────────────────────────────────────────────────────────
 function calc() {
-  const opF    = num(gv('g-op').value) / 100;
-  const h1f    = num(gv('g-h1split').value) / 100;
-  const h2f    = 1 - h1f;
-  const h2tot  = Math.max(1, num(gv('g-h2total').value));
-  const noLift = num(gv('g-nolift').value);
-  const liftMos = Math.max(0, h2tot - noLift);
+  const diy  = Math.max(1, num(gv('g-diy').value));
+  const dnl  = num(gv('g-dnl').value);
+  const dH2  = diy/2;
+  const dLift= Math.max(0, dH2-dnl);
 
-  const rows = SKUS.map(s => {
-    const g   = num(s.g2025);
-    const h1  = num(s.h126);
-    const op25  = g  * (1 - opF);
-    const h126op = h1 * (1 - opF);
-    return { name: s.name||'—', op25, h1_25: op25*h1f, h2_25: op25*h2f, h126op };
-  });
+  const rows = SKUS.map(s=>({
+    name: s.name||'—',
+    h1ly: num(s.h1ly), h2ly: num(s.h2ly), h1cy: num(s.h1cy)
+  }));
 
-  const sumH1_25 = rows.reduce((a,r) => a+r.h1_25, 0);
-  const sumH1_26 = rows.reduce((a,r) => a+r.h126op, 0);
-  const sumH2_25 = rows.reduce((a,r) => a+r.h2_25, 0);
-  const sum25    = rows.reduce((a,r) => a+r.op25, 0);
+  const sumH1LY = rows.reduce((a,r)=>a+r.h1ly,0);
+  const sumH2LY = rows.reduce((a,r)=>a+r.h2ly,0);
+  const sumH1CY = rows.reduce((a,r)=>a+r.h1cy,0);
+  const sumLY   = sumH1LY+sumH2LY;
 
-  const dec    = sumH1_25 > 0 ? sumH1_26/sumH1_25 - 1 : -0.046;
-  const h2_26b = sumH2_25 * (1+dec);
-  const h1_27b = sumH1_26 * (1+dec);
-  const fyBase = sumH1_26 + h2_26b;
+  const decline = sumH1LY>0 ? sumH1CY/sumH1LY-1 : 0;
 
-  const sc = SCENARIOS.map(s => {
-    const net = (s.masterPct/100) * (
-        (s.kneeArm/100)*(s.liftKA/100)
-      + (s.kneeEye/100)*(s.liftKE/100)
-      + (s.footArm/100)*(s.liftFA/100)
+  rows.forEach(r=>{ r.h2proj = r.h2ly*(1+decline); });
+  const sumH2Proj = rows.reduce((a,r)=>a+r.h2proj,0);
+  const fyCY_base = sumH1CY+sumH2Proj;
+  const h1NY_base = sumH1CY*(1+decline);
+
+  const sc = SCENARIOS.map(s=>{
+    const net = (s.masterPct/100)*(
+      (s.kneeArm/100)*(s.liftKA/100)+
+      (s.kneeEye/100)*(s.liftKE/100)+
+      (s.footArm/100)*(s.liftFA/100)+
+      (s.footEye/100)*(s.liftFE/100)
     );
-    const full    = 1 + net;
-    const bFactor = (noLift/h2tot)*1.0 + (liftMos/h2tot)*full;
-    const h2w  = h2_26b * bFactor;
-    const h2i  = h2w - h2_26b;
-    const fyw  = sumH1_26 + h2w;
-    const fyP  = sum25 > 0 ? (fyw/sum25-1)*100 : 0;
-    const fyBP = sum25 > 0 ? (fyBase/sum25-1)*100 : 0;
-    const h127w  = h1_27b * full;
-    const h127i  = h127w - h1_27b;
-    const h127P  = sumH1_26 > 0 ? (h127w/sumH1_26-1)*100 : 0;
-    const h127BP = sumH1_26 > 0 ? (h1_27b/sumH1_26-1)*100 : 0;
-    const skuH2  = rows.map(r => {
-      const b = r.h2_25*(1+dec);
-      return { name:r.name, h1:r.h126op, h2b:b, h2w:b*bFactor, incr:b*(bFactor-1) };
-    });
+    const full    = 1+net;
+    const bFactor = dH2>0 ? (dnl/dH2)+(dLift/dH2)*full : full;
+    const h2w  = sumH2Proj*bFactor;
+    const h2i  = h2w-sumH2Proj;
+    const fyw  = sumH1CY+h2w;
+    const fyP  = sumLY>0?(fyw/sumLY-1)*100:0;
+    const fyBP = sumLY>0?(fyCY_base/sumLY-1)*100:0;
+    const h1NYw  = h1NY_base*full;
+    const h1NYi  = h1NYw-h1NY_base;
+    const h1NYP  = sumH1CY>0?(h1NYw/sumH1CY-1)*100:0;
+    const h1NYBP = sumH1CY>0?(h1NY_base/sumH1CY-1)*100:0;
+    const skuH2  = rows.map(r=>({
+      name:r.name, h1cy:r.h1cy,
+      h2b:r.h2proj, h2w:r.h2proj*bFactor, incr:r.h2proj*(bFactor-1)
+    }));
     return {
       name:s.name, net:net*100, blended:(bFactor-1)*100,
-      h2b:h2_26b, h2w, h2i, fyw, fyBase, fyP, fyBP,
-      h1_27b, h127w, h127i, h127P, h127BP,
-      combined:h2i+h127i, skuH2
+      h2b:sumH2Proj, h2w, h2i, fyw, fyCY_base, fyP, fyBP,
+      h1NY_base, h1NYw, h1NYi, h1NYP, h1NYBP,
+      combined:h2i+h1NYi, skuH2
     };
   });
 
-  return { rows, sum25, sumH1_26, h2_26b, fyBase, h1_27b, dec:dec*100, hasData:sum25>0, sc };
+  return {rows,sumH1LY,sumH2LY,sumH1CY,sumLY,
+    decline:decline*100, sumH2Proj, fyCY_base, h1NY_base,
+    hasData:sumLY>0, sc};
 }
 
 // ── Update DOM ────────────────────────────────────────────────────────────────
 function recalc() {
   const R = calc();
-  const opF = num(gv('g-op').value) / 100;
 
-  // Derived columns in SKU table
-  let totG=0, totH=0;
-  SKUS.forEach(s => {
-    const g = num(s.g2025), h = num(s.h126);
-    totG += g; totH += h;
-    const el_op  = gv(`sd-op-${s.id}`);
-    const el_h1  = gv(`sd-h1-${s.id}`);
-    if (el_op) el_op.textContent = g > 0 ? Math.round(g*(1-opF)).toLocaleString() : '—';
-    if (el_h1) el_h1.textContent = h > 0 ? Math.round(h*(1-opF)).toLocaleString() : '—';
+  // Per-SKU projected H2 column
+  let tH1LY=0,tH2LY=0,tH1CY=0,tH2P=0;
+  SKUS.forEach(s=>{
+    tH1LY+=num(s.h1ly); tH2LY+=num(s.h2ly); tH1CY+=num(s.h1cy);
+    const h2ly=num(s.h2ly);
+    const proj = h2ly>0 ? h2ly*(1+R.decline/100) : 0;
+    tH2P+=proj;
+    const el=gv('proj-'+s.id);
+    if(el) el.textContent = proj>0 ? Math.round(proj).toLocaleString() : '—';
   });
 
-  gv('tot-g2025').textContent = totG > 0 ? totG.toLocaleString() : '—';
-  gv('tot-h126').textContent  = totH > 0 ? totH.toLocaleString() : '—';
-  gv('tot-op25').textContent  = R.sum25 > 0 ? Math.round(R.sum25).toLocaleString() : '—';
-  gv('tot-h126op').textContent= R.sumH1_26 > 0 ? Math.round(R.sumH1_26).toLocaleString() : '—';
+  gv('tot-h1ly').textContent = tH1LY>0?tH1LY.toLocaleString():'—';
+  gv('tot-h2ly').textContent = tH2LY>0?tH2LY.toLocaleString():'—';
+  gv('tot-h1cy').textContent = tH1CY>0?tH1CY.toLocaleString():'—';
+  gv('tot-h2proj').textContent = tH2P>0?Math.round(tH2P).toLocaleString():'—';
 
-  // Decline card
-  const dc = gv('decline-card');
-  if (R.hasData) {
-    dc.style.display = 'block';
-    gv('decline-val').textContent = pct(R.dec);
-  } else {
-    dc.style.display = 'none';
-  }
+  const dc=gv('decline-card');
+  if(R.hasData){ dc.style.display='block'; gv('decline-val').textContent=pct(R.decline); }
+  else dc.style.display='none';
 
-  // Results tab
   renderResults(R);
 }
 
 // ── Render results ────────────────────────────────────────────────────────────
 function renderResults(R) {
-  const cont = gv('results-inner');
-  if (!R.hasData) {
-    cont.innerHTML = `
-      <div class="no-data">
-        <h2>No data yet</h2>
-        <p>Enter your SKU volumes in Data Entry to generate results.</p>
-        <button class="btn-primary" onclick="switchTab(0)">Go to Data Entry</button>
-      </div>`;
+  const cont=gv('results-inner');
+  if(!R.hasData){
+    cont.innerHTML='<div class="no-data"><h2>No data yet</h2>'+
+      '<p>Enter SKU volumes in Data Entry to generate results.</p>'+
+      '<button class="btn-p" onclick="switchTab(0)">Go to Data Entry</button></div>';
     return;
   }
 
-  // Metric cards
-  let html = `<div class="metrics-row">`;
-  const metrics = [
-    { label:'2025 Off-Prem Total',  val:fmtN(R.sum25),    sub:'Your calculation universe', dark:false },
-    { label:'H1 2026 Off-Prem',     val:fmtN(R.sumH1_26), sub:'Fixed — already happened',  dark:false },
-    { label:'H2 2026 Baseline',     val:fmtN(R.h2_26b),   sub:'No shelf changes applied',  dark:false },
-    { label:'Derived Decline Rate', val:pct(R.dec),        sub:'Pulled from your H1 data',  dark:true  },
-  ];
-  metrics.forEach(m => {
-    html += `<div class="metric-card${m.dark?' dark':''}">
-      <div class="m-label">${m.label}</div>
-      <div class="m-val">${m.val}</div>
-      <div class="m-sub">${m.sub}</div>
-    </div>`;
+  let html='<div class="metrics-row">';
+  [{label:'Last Year Total',       val:fmtN(R.sumLY),       sub:'H1 + H2 Last Year across all SKUs', dark:false},
+   {label:'H1 Current Year',       val:fmtN(R.sumH1CY),     sub:'Fixed — already happened',          dark:false},
+   {label:'H2 Current Yr Baseline',val:fmtN(R.sumH2Proj),   sub:'Projected, no shelf changes',       dark:false},
+   {label:'Derived Decline Rate',  val:pct(R.decline),       sub:'H1 CY ÷ H1 LY − 1. No assumptions.',dark:true},
+  ].forEach(m=>{
+    html+='<div class="met-card'+(m.dark?' dark':'')+'">'+
+      '<div class="met-lbl">'+m.label+'</div>'+
+      '<div class="met-val">'+m.val+'</div>'+
+      '<div class="met-sub">'+m.sub+'</div></div>';
   });
-  html += `</div>`;
+  html+='</div>';
 
   // Comparison table
-  html += `<div class="cmp-table-wrap">
-    <div class="cmp-table-hd">Three-Scenario Comparison</div>
-    <table>
-      <thead>
-        <tr style="background:var(--cream)">
-          <th class="t-left t-muted" style="min-width:220px">Metric</th>
-          ${R.sc.map(s => `<th class="t-right" style="color:var(--berry);font-size:12px">${s.name.split('—')[0].trim()}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>`;
+  html+='<div class="cmp-wrap"><div class="cmp-hd">Three-Scenario Comparison</div><table>'+
+    '<thead><tr style="background:var(--cream)">'+
+    '<th class="tl" style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;min-width:220px">Metric</th>'+
+    R.sc.map(s=>'<th class="tr" style="color:var(--berry);font-size:12px">'+s.name.split('—')[0].trim()+'</th>').join('')+
+    '</tr></thead><tbody>';
 
-  const rows2 = [
-    { label:'Net Lift on Moving Volume',      vals:R.sc.map(s=>pct(s.net)) },
-    { label:'Blended H2 Lift (timing adj.)',  vals:R.sc.map(s=>pct(s.blended)) },
-    { section:'H2 2026' },
-    { label:'H2 Baseline (no moves)',         vals:R.sc.map(s=>fmtN(s.h2b)),   dim:true },
-    { label:'H2 With Moves',                  vals:R.sc.map(s=>fmtN(s.h2w)),   bold:true },
-    { label:'H2 Incremental Cases',           vals:R.sc.map(s=>fmtPos(s.h2i)), bold:true, green:true },
-    { section:'Full Year 2026 vs. 2025 Off-Prem' },
-    { label:'FY 2026 No Moves',               vals:R.sc.map(s=>`${fmtN(s.fyBase)}&nbsp;&nbsp;(${pct(s.fyBP)})`), dim:true },
-    { label:'FY 2026 With Moves',             vals:R.sc.map(s=>`${fmtN(s.fyw)}&nbsp;&nbsp;(${pct(s.fyP)})`),    bold:true },
-    { section:'H1 2027 vs. H1 2026' },
-    { label:'H1 2027 No Moves',               vals:R.sc.map(s=>`${fmtN(s.h1_27b)}&nbsp;&nbsp;(${pct(s.h127BP)})`), dim:true },
-    { label:'H1 2027 With Moves',             vals:R.sc.map(s=>`${fmtN(s.h127w)}&nbsp;&nbsp;(${pct(s.h127P)})`),  bold:true },
-    { label:'H1 2027 Incremental Cases',      vals:R.sc.map(s=>fmtPos(s.h127i)), bold:true, green:true },
-    { section:'12-Month Combined' },
-    { label:'Total Incremental Cases (H2 2026 + H1 2027)', vals:R.sc.map(s=>fmtPos(s.combined)), bold:true, green:true, highlight:true },
+  const rows2=[
+    {label:'Net Lift on Moving Volume',                      vals:R.sc.map(s=>pct(s.net))},
+    {label:'Blended H2 Lift (timing adjusted)',              vals:R.sc.map(s=>pct(s.blended))},
+    {section:'H2 Current Year'},
+    {label:'H2 Baseline — No Moves',                        vals:R.sc.map(s=>fmtN(s.h2b)),  dim:true},
+    {label:'H2 With Moves',                                  vals:R.sc.map(s=>fmtN(s.h2w)),  bold:true},
+    {label:'H2 Incremental Cases',                           vals:R.sc.map(s=>fmtPos(s.h2i)),bold:true,green:true},
+    {section:'Full Year: Current vs. Last Year'},
+    {label:'Full Year No Moves',                             vals:R.sc.map(s=>fmtN(s.fyCY_base)+'  ('+pct(s.fyBP)+')'), dim:true},
+    {label:'Full Year With Moves',                           vals:R.sc.map(s=>fmtN(s.fyw)+'  ('+pct(s.fyP)+')'),       bold:true},
+    {section:'H1 Next Year vs. H1 Current Year'},
+    {label:'H1 Next Year — No Moves',                       vals:R.sc.map(s=>fmtN(s.h1NY_base)+'  ('+pct(s.h1NYBP)+')'), dim:true},
+    {label:'H1 Next Year — With Moves',                     vals:R.sc.map(s=>fmtN(s.h1NYw)+'  ('+pct(s.h1NYP)+')'),      bold:true},
+    {label:'H1 Next Year Incremental Cases',                 vals:R.sc.map(s=>fmtPos(s.h1NYi)),bold:true,green:true},
+    {section:'Combined'},
+    {label:'Total Incremental Cases (H2 CY + H1 Next Year)',vals:R.sc.map(s=>fmtPos(s.combined)),bold:true,green:true,hi:true},
   ];
 
-  rows2.forEach((row, ri) => {
-    if (row.section) {
-      html += `<tr class="t-section"><td colspan="4">${row.section}</td></tr>`;
+  rows2.forEach((row,ri)=>{
+    if(row.section){
+      html+='<tr class="t-section"><td colspan="4">'+row.section+'</td></tr>';
       return;
     }
-    const cls = [
-      row.highlight ? 't-highlight' : '',
-      row.dim ? 't-dim' : '',
-      row.bold ? 't-bold' : '',
-      row.green ? 't-green' : '',
-    ].filter(Boolean).join(' ');
-    html += `<tr class="${cls}">
-      <td class="t-left" style="color:var(--muted);font-size:${row.highlight?13:12}px;font-weight:${row.bold?'bold':'normal'}">${row.label}</td>
-      ${row.vals.map(v => `<td class="t-right val-cell">${v}</td>`).join('')}
-    </tr>`;
+    const cls=[row.hi?'t-hi':'',row.dim?'t-dim':''].filter(Boolean).join(' ');
+    html+='<tr class="'+cls+'">'+
+      '<td class="tl" style="color:var(--muted);font-size:'+(row.hi?13:12)+'px;font-weight:'+(row.bold?'bold':'normal')+'">'+row.label+'</td>'+
+      row.vals.map(v=>'<td class="tr" style="font-weight:'+(row.bold?'bold':'normal')+';font-size:'+(row.hi?15:13)+'px;color:'+(row.green?'var(--green)':row.dim?'var(--muted)':'var(--dark)')+'">'+v+'</td>').join('')+
+    '</tr>';
   });
+  html+='</tbody></table></div>';
 
-  html += `</tbody></table></div>`;
-
-  // Per-SKU detail per scenario
-  R.sc.forEach((sc, si) => {
-    const active = sc.skuH2.filter(r => r.h2b > 0 || r.h1 > 0);
-    if (!active.length) return;
-    html += `<div class="sku-detail-wrap">
-      <div class="sku-detail-hd sc${si}">${sc.name} — SKU Detail (H2 2026, off-premise)</div>
-      <table>
-        <thead>
-          <tr style="background:var(--cream)">
-            <th class="t-left" style="color:var(--muted);font-size:11px">SKU</th>
-            <th class="t-right" style="color:var(--muted);font-size:11px">H1 2026</th>
-            <th class="t-right" style="color:var(--muted);font-size:11px">H2 Baseline</th>
-            <th class="t-right" style="color:var(--muted);font-size:11px">H2 With Moves</th>
-            <th class="t-right" style="color:var(--muted);font-size:11px">H2 Incremental</th>
-          </tr>
-        </thead>
-        <tbody>`;
-    active.forEach(r => {
-      html += `<tr>
-        <td class="t-left">${r.name}</td>
-        <td class="t-right" style="color:var(--muted)">${fmtN(r.h1)}</td>
-        <td class="t-right" style="color:var(--muted)">${fmtN(r.h2b)}</td>
-        <td class="t-right" style="font-weight:bold;color:var(--berry)">${fmtN(r.h2w)}</td>
-        <td class="t-right" style="font-weight:bold;color:var(--green)">+${fmtN(r.incr)}</td>
-      </tr>`;
+  // Per-SKU detail
+  R.sc.forEach((sc,si)=>{
+    const active=sc.skuH2.filter(r=>r.h2b>0||r.h1cy>0);
+    if(!active.length) return;
+    html+='<div class="det-wrap"><div class="det-hd s'+si+'">'+sc.name+' — SKU Detail (H2 Current Year)</div>'+
+      '<table><thead><tr style="background:var(--cream)">'+
+      ['SKU','H1 Current Yr','H2 Baseline','H2 With Moves','H2 Incremental'].map((h,hi)=>
+        '<th style="text-align:'+(hi?'right':'left')+';color:var(--muted);font-size:11px">'+h+'</th>'
+      ).join('')+'</tr></thead><tbody>';
+    active.forEach(r=>{
+      html+='<tr><td class="tl">'+r.name+'</td>'+
+        '<td class="tr" style="color:var(--muted)">'+fmtN(r.h1cy)+'</td>'+
+        '<td class="tr" style="color:var(--muted)">'+fmtN(r.h2b)+'</td>'+
+        '<td class="tr" style="font-weight:bold;color:var(--berry)">'+fmtN(r.h2w)+'</td>'+
+        '<td class="tr" style="font-weight:bold;color:var(--green)">+'+fmtN(r.incr)+'</td></tr>';
     });
-    const tH1  = active.reduce((a,r)=>a+r.h1,0);
-    html += `<tr style="background:var(--cream);font-weight:bold;color:var(--berry)">
-      <td class="t-left">TOTAL</td>
-      <td class="t-right">${fmtN(tH1)}</td>
-      <td class="t-right">${fmtN(sc.h2b)}</td>
-      <td class="t-right">${fmtN(sc.h2w)}</td>
-      <td class="t-right">+${fmtN(sc.h2i)}</td>
-    </tr></tbody></table></div>`;
+    const tH1=active.reduce((a,r)=>a+r.h1cy,0);
+    html+='<tr style="background:var(--cream);font-weight:bold;color:var(--berry)">'+
+      '<td class="tl">TOTAL</td>'+
+      '<td class="tr">'+fmtN(tH1)+'</td>'+
+      '<td class="tr">'+fmtN(sc.h2b)+'</td>'+
+      '<td class="tr">'+fmtN(sc.h2w)+'</td>'+
+      '<td class="tr">+'+fmtN(sc.h2i)+'</td></tr>'+
+      '</tbody></table></div>';
   });
 
-  html += `<div class="footnote">
-    Note: Every excluded variable (compliance rate, competitive context, facing count, regional variance) biases these results toward overstatement. Treat as ceiling estimates, not projections.
-  </div>`;
-
-  cont.innerHTML = html;
+  html+='<div class="footnote">Decline rate derived directly from H1 Current Year ÷ H1 Last Year. No split assumptions. H2 projection applies that rate to actual H2 Last Year. Every excluded variable (compliance, facings, competitive context) biases these results toward overstatement — treat as ceiling estimates.</div>';
+  cont.innerHTML=html;
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
-function switchTab(i) {
-  document.querySelectorAll('.tab-btn').forEach((b,j) => b.classList.toggle('active', j===i));
-  document.querySelectorAll('.tab-panel').forEach((p,j) => p.classList.toggle('active', j===i));
-  if (i === 2) recalc();
+function switchTab(i){
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab-panel').forEach((p,j)=>p.classList.toggle('active',j===i));
+  if(i===2) recalc();
 }
 
 // ── Clear ─────────────────────────────────────────────────────────────────────
-function clearAll() {
-  if (!confirm('Clear all SKU data and reset settings?')) return;
-  SKUS.forEach(s => { s.name=''; s.g2025=''; s.h126=''; });
-  gv('g-op').value='10'; gv('g-h1split').value='47.8'; gv('g-h2total').value='6'; gv('g-nolift').value='2';
-  buildSkuRows();
-  recalc();
+function clearAll(){
+  if(!confirm('Clear all SKU data and reset settings?')) return;
+  SKUS.forEach(s=>{s.name='';s.h1ly='';s.h2ly='';s.h1cy='';});
+  gv('g-diy').value='365'; gv('g-dnl').value='60';
+  buildSkuRows(); recalc();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
