@@ -153,10 +153,15 @@
         <input type="number" id="g-dnl" value="60" min="0" step="1" oninput="recalc()">
         <div class="tip">How many days into H2 before shelf sets are complete</div>
       </div>
+      <div class="set-card">
+        <label>Days Elapsed in H1 Current Year</label>
+        <input type="number" id="g-del" value="" min="1" max="366" step="1" placeholder="Leave blank = full H1" oninput="recalc()">
+        <div class="tip">Enter actual days of data if mid-H1. Blank assumes full H1 is complete.</div>
+      </div>
       <div class="set-card dark" id="decline-card" style="display:none">
         <label>Derived Decline Rate</label>
         <div class="bigval" id="decline-val">—</div>
-        <div class="tip">H1 Current Year ÷ H1 Last Year − 1. No assumptions — uses your actual data.</div>
+        <div class="tip" id="decline-tip">H1 Current Year ÷ H1 Last Year − 1.</div>
       </div>
     </div>
 
@@ -342,12 +347,17 @@ function calc() {
   const sumH1CY = rows.reduce((a,r)=>a+r.h1cy,0);
   const sumLY   = sumH1LY+sumH2LY;
 
-  const decline = sumH1LY>0 ? sumH1CY/sumH1LY-1 : 0;
+  const dEl  = num(gv('g-del').value);
+  const dH1  = diy/2;
+  // Normalize H1 CY to full-half equivalent if partial period entered
+  const h1cyNorm = (dEl>0 && dEl<dH1) ? sumH1CY*(dH1/dEl) : sumH1CY;
+  const isPartial = dEl>0 && dEl<dH1;
+  const decline = sumH1LY>0 ? h1cyNorm/sumH1LY-1 : 0;
 
   rows.forEach(r=>{ r.h2proj = r.h2ly*(1+decline); });
   const sumH2Proj = rows.reduce((a,r)=>a+r.h2proj,0);
-  const fyCY_base = sumH1CY+sumH2Proj;
-  const h1NY_base = sumH1CY*(1+decline);
+  const fyCY_base = h1cyNorm+sumH2Proj;
+  const h1NY_base = h1cyNorm*(1+decline);
 
   const sc = SCENARIOS.map(s=>{
     const net = (s.masterPct/100)*(
@@ -368,7 +378,7 @@ function calc() {
     const h1NYP  = sumH1CY>0?(h1NYw/sumH1CY-1)*100:0;
     const h1NYBP = sumH1CY>0?(h1NY_base/sumH1CY-1)*100:0;
     const skuH2  = rows.map(r=>({
-      name:r.name, h1cy:r.h1cy,
+      name:r.name, h1cy:isPartial ? r.h1cy*(dH1/dEl) : r.h1cy,
       h2b:r.h2proj, h2w:r.h2proj*bFactor, incr:r.h2proj*(bFactor-1)
     }));
     return {
@@ -380,8 +390,8 @@ function calc() {
   });
 
   return {rows,sumH1LY,sumH2LY,sumH1CY,sumLY,
-    decline:decline*100, sumH2Proj, fyCY_base, h1NY_base,
-    hasData:sumLY>0, sc};
+    decline:decline*100, h1cyNorm, sumH2Proj, fyCY_base, h1NY_base,
+    isPartial, hasData:sumLY>0, sc};
 }
 
 // ── Update DOM ────────────────────────────────────────────────────────────────
@@ -405,8 +415,14 @@ function recalc() {
   gv('tot-h2proj').textContent = tH2P>0?Math.round(tH2P).toLocaleString():'—';
 
   const dc=gv('decline-card');
-  if(R.hasData){ dc.style.display='block'; gv('decline-val').textContent=pct(R.decline); }
-  else dc.style.display='none';
+  if(R.hasData){
+    dc.style.display='block';
+    gv('decline-val').textContent=pct(R.decline);
+    const tip=gv('decline-tip');
+    if(tip) tip.textContent = R.isPartial
+      ? 'Partial period normalized to full H1 run rate. Linear extrapolation — seasonal variance not accounted for.'
+      : 'Full H1 comparison. H1 Current Year ÷ H1 Last Year − 1.';
+  } else dc.style.display='none';
 
   renderResults(R);
 }
@@ -423,7 +439,7 @@ function renderResults(R) {
 
   let html='<div class="metrics-row">';
   [{label:'Last Year Total',       val:fmtN(R.sumLY),       sub:'H1 + H2 Last Year across all SKUs', dark:false},
-   {label:'H1 Current Year',       val:fmtN(R.sumH1CY),     sub:'Fixed — already happened',          dark:false},
+   {label:'H1 Current Year',       val:fmtN(R.h1cyNorm),    sub:R.isPartial?'Partial period — normalized to full H1 run rate':'Fixed — already happened', dark:false},
    {label:'H2 Current Yr Baseline',val:fmtN(R.sumH2Proj),   sub:'Projected, no shelf changes',       dark:false},
    {label:'Derived Decline Rate',  val:pct(R.decline),       sub:'H1 CY ÷ H1 LY − 1. No assumptions.',dark:true},
   ].forEach(m=>{
@@ -498,7 +514,7 @@ function renderResults(R) {
       '</tbody></table></div>';
   });
 
-  html+='<div class="footnote">Decline rate derived directly from H1 Current Year ÷ H1 Last Year. No split assumptions. H2 projection applies that rate to actual H2 Last Year. Every excluded variable (compliance, facings, competitive context) biases these results toward overstatement — treat as ceiling estimates.</div>';
+  html+='<div class="footnote">Decline rate derived from H1 Current Year ÷ H1 Last Year — no split assumptions. H2 projection applies that rate to H2 Last Year. If Days Elapsed in H1 is set, Current Year data is normalized to a full-half run rate using linear extrapolation; seasonal distribution variance is not accounted for. All excluded variables (compliance, facings, competitive context) bias results toward overstatement — treat as ceiling estimates.</div>';
   cont.innerHTML=html;
 }
 
