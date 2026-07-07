@@ -133,6 +133,38 @@
   .footnote { padding: 12px 16px; background: var(--white); border-radius: 8px; font-size: 11px; color: var(--muted); font-style: italic; box-shadow: 0 1px 4px rgba(92,31,56,.08); margin-top: 4px; }
   .row-btns { margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
   .no-data { background: var(--white); border-radius: 8px; padding: 48px; text-align: center; color: var(--muted); }
+  /* Dollar toggle */
+  .unit-toggle { display:flex; gap:0; background:var(--white); border-radius:8px; padding:3px; box-shadow:0 1px 4px rgba(92,31,56,.1); width:fit-content; margin-bottom:16px; }
+  .unit-btn { background:transparent; border:none; padding:6px 16px; font-size:12px; font-family:inherit; cursor:pointer; border-radius:6px; color:var(--muted); }
+  .unit-btn.active { background:var(--berry); color:var(--white); font-weight:bold; }
+  .no-price-warn { font-size:11px; color:#D97706; font-style:italic; margin-bottom:12px; padding:6px 12px; background:#FFFBEB; border-radius:6px; border-left:3px solid #D97706; display:none; }
+  /* Shelf value tab */
+  .sv-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media(max-width:700px){ .sv-grid { grid-template-columns:1fr; } }
+  .sv-section { background:var(--white); border-radius:8px; box-shadow:0 1px 4px rgba(92,31,56,.1); overflow:hidden; margin-bottom:16px; }
+  .sv-section-hd { background:var(--berry); color:var(--white); padding:10px 16px; font-size:13px; font-weight:bold; }
+  .sv-section-hd.amber { background:#D97706; }
+  .sv-body { padding:14px 16px; }
+  .sv-field { margin-bottom:12px; }
+  .sv-field label { display:block; font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .sv-field .sv-derived { font-size:18px; font-weight:bold; color:var(--berry); }
+  .sv-field .sv-note { font-size:10px; color:var(--rose); margin-top:2px; }
+  .sv-idx-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .sv-idx-card { background:var(--cream); border-radius:6px; padding:10px; text-align:center; }
+  .sv-idx-card label { display:block; font-size:10px; color:var(--muted); margin-bottom:4px; }
+  .sv-idx-card input { text-align:center; font-size:16px; font-weight:bold; color:var(--berry); border-color:rgba(162,103,105,.3); }
+  .sv-result-table { width:100%; border-collapse:collapse; }
+  .sv-result-table td { padding:8px 12px; font-size:13px; border-bottom:1px solid var(--cream); }
+  .sv-result-table tr:last-child td { border-bottom:none; }
+  .sv-result-table .lbl { color:var(--muted); }
+  .sv-result-table .val { text-align:right; font-weight:bold; color:var(--berry); font-size:14px; }
+  .sv-result-table .val.pos { color:var(--green); }
+  .sv-result-table .val.neg { color:#B91C1C; }
+  .sv-result-table .val.amber { color:#D97706; }
+  .sv-tier-row { background:var(--sand) !important; }
+  .sv-tier-row td { font-weight:bold !important; color:var(--berry) !important; }
+  .sv-hi-row td { background:#F0FDF4; }
+  .sv-interpret { font-size:11px; color:var(--muted); font-style:italic; margin-top:10px; padding-top:8px; border-top:1px solid var(--cream); line-height:1.5; }
   /* Math tab */
   .math-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
   @media(max-width:800px){ .math-grid { grid-template-columns:1fr; } }
@@ -176,6 +208,7 @@
     <button class="tab-btn" onclick="switchTab(1)">② Scenarios</button>
     <button class="tab-btn" onclick="switchTab(2)">③ Results</button>
     <button class="tab-btn" onclick="switchTab(3)">④ Math</button>
+    <button class="tab-btn" onclick="switchTab(4)">⑤ Shelf Value</button>
   </div>
 </div>
 
@@ -225,6 +258,11 @@
           <div class="tip">No current year data. Enter your best estimate.</div>
         </div>
       </div>
+      <div class="set-card">
+        <label>Wholesale Price Per Case ($)</label>
+        <input type="number" id="g-ppc" value="" min="0" step="0.01" placeholder="e.g. 90" oninput="recalc()">
+        <div class="tip">Used for Cases/Dollars toggle in Results and Shelf Value tab. Leave blank to work in cases only.</div>
+      </div>
       <div class="set-card dark" id="decline-card" style="display:none">
         <label id="trend-label">H1 Trend Rate</label>
         <div class="bigval" id="decline-val">-</div>
@@ -271,6 +309,11 @@
 
   <!-- TAB 2: RESULTS -->
   <div class="tab-panel" id="panel-2">
+    <div class="unit-toggle">
+      <button id="unit-cases" class="unit-btn active" onclick="setUnitMode(0)">Cases</button>
+      <button id="unit-dollars" class="unit-btn" onclick="setUnitMode(1)">Est. Wholesale $</button>
+    </div>
+    <div class="no-price-warn" id="no-price-warn">Enter a Wholesale Price Per Case in Data Entry to enable dollar view.</div>
     <div id="results-inner"></div>
   </div>
 
@@ -279,10 +322,24 @@
     <div id="math-inner"></div>
   </div>
 
+  <!-- TAB 4: SHELF VALUE -->
+  <div class="tab-panel" id="panel-4">
+    <div id="shelf-inner"></div>
+  </div>
+
 </div>
 
 <script>
-let MODE = 0; // 0 = Projecting H2, 1 = Projecting H1 Next Year
+let MODE = 0;         // 0 = Projecting H2, 1 = Projecting H1 Next Year
+let SHOW_DOLLARS = 0; // 0 = cases, 1 = estimated wholesale dollars
+
+// Shelf value tab state
+const SHELF = {
+  stores:'', brandLF:'', catLF:'', catDollars:'', brandOverride:'',
+  bottleW:3.0,
+  idx:{ eye:1.5, below:1.2, above:0.9, bottom:0.6 },
+  tier:'eye',
+};
 
 const SKUS = Array.from({length:25}, (_,i) => ({id:i, name:'', h1ly:'', h2ly:'', h1cy:'', h2cy:''}));
 
@@ -300,6 +357,27 @@ const num = v  => parseFloat(v) || 0;
 const fmtN   = (n,blank) => (n===null||n===undefined||isNaN(n)||(blank&&n===0)) ? '-' : Math.round(n).toLocaleString();
 const fmtPos = (n,blank) => (n===null||n===undefined||isNaN(n)||(blank&&n===0)) ? '-' : (n>=0?'+':'−')+Math.round(Math.abs(n)).toLocaleString();
 const pct    = n => isNaN(n) ? '-' : (n>=0?'+':'−')+Math.abs(n).toFixed(1)+'%';
+
+// Price helpers
+function getBlendedPrice() { return Math.max(0, num(gv('g-ppc') ? gv('g-ppc').value : 0)); }
+
+// Dollar-aware formatters: use when displaying case-volume numbers
+function fmtCV(n, blank) {
+  if (n===null||n===undefined||isNaN(n)||(blank&&n===0)) return '-';
+  const bp = getBlendedPrice();
+  if (SHOW_DOLLARS && bp > 0) return '$'+Math.round(Math.abs(n*bp)).toLocaleString();
+  return Math.round(n).toLocaleString();
+}
+function fmtCVPos(n) {
+  if (n===null||n===undefined||isNaN(n)) return '-';
+  const bp = getBlendedPrice();
+  if (SHOW_DOLLARS && bp > 0) {
+    const v = n*bp;
+    return (v>=0?'+$':'-$')+Math.round(Math.abs(v)).toLocaleString();
+  }
+  return fmtPos(n);
+}
+function unitLabel() { return SHOW_DOLLARS && getBlendedPrice()>0 ? 'Est. Wholesale $' : 'Cases'; }
 
 // ── Mode toggle ───────────────────────────────────────────────────────────────
 const MODE_LABELS = {
@@ -696,6 +774,8 @@ function recalc() {
   } else dc.style.display='none';
 
   renderResults(R);
+  lastR = R;
+  if(gv('panel-4') && gv('panel-4').classList.contains('active')) renderShelf(R);
 }
 
 // ── Render results ────────────────────────────────────────────────────────────
@@ -713,11 +793,11 @@ function renderResults(R) {
   // Metric cards
   let html='<div class="metrics-row">';
   [
-    {label:'Last Year Total',      val:fmtN(R.sumLY,true),   sub:'H1 LY + H2 LY combined',                    dark:false},
-    {label:L.actP,                 val:R.usingManual?'Est: '+fmtN(R.actPNorm,true):fmtN(R.actPNorm,true),
+    {label:'Last Year Total',      val:fmtCV(R.sumLY,true),  sub:'H1 LY + H2 LY combined',                    dark:false},
+    {label:L.actP,                 val:R.usingManual?'Est: '+fmtCV(R.actPNorm,true):fmtCV(R.actPNorm,true),
       sub:R.usingManual?'No data. Estimated from manual trend rate':R.partialEntry?'Some rows missing CY data. See warning':R.isPartial?'Partial period: daily-rate normalized':'Fixed. Already happened', dark:false},
-    ...(MODE===1 && !R.usingManual ? [{label:'H1 Current Year (optional)', val: R.h1cyBaseUsed ? fmtN(R.sumH1CYMode1,true) : '-', sub: R.h1cyBaseUsed ? 'Used as H1 NY projection base (more accurate)' : 'Not entered. H1 LY used as projection base instead', dark:false}] : []),
-    {label:L.primLbl+' Baseline',  val:fmtN(R.sumPrimProj,true), sub:'Projected. No shelf changes',           dark:false},
+    ...(MODE===1 && !R.usingManual ? [{label:'H1 Current Year (optional)', val: R.h1cyBaseUsed ? fmtCV(R.sumH1CYMode1,true) : '-', sub: R.h1cyBaseUsed ? 'Used as H1 NY projection base (more accurate)' : 'Not entered. H1 LY used as projection base instead', dark:false}] : []),
+    {label:L.primLbl+' Baseline',  val:fmtCV(R.sumPrimProj,true), sub:'Projected. No shelf changes',           dark:false},
     {label:L.trend,                val:pct(R.trend),          sub:R.isPartial?'Normalized partial period':'Same-period daily-rate comparison.',dark:true},
   ].forEach(m=>{
     html+='<div class="met-card'+(m.dark?' dark':'')+'">'+
@@ -728,7 +808,7 @@ function renderResults(R) {
   html+='</div>';
 
   // Comparison table
-  html+='<div class="cmp-wrap"><div class="cmp-hd">Three-Scenario Comparison'+(R.usingManual?': ESTIMATED (No Current Year Data)':'')+'</div><table>'+
+  html+='<div class="cmp-wrap"><div class="cmp-hd">Three-Scenario Comparison'+(R.usingManual?': ESTIMATED (No Current Year Data)':'')+' <span style="font-size:11px;opacity:.75;font-weight:normal">('+unitLabel()+')</span>'+'</div><table>'+
     '<thead><tr style="background:var(--cream)">'+
     '<th class="tl" style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;min-width:240px">Metric</th>'+
     R.sc.map(s=>'<th class="tr" style="color:var(--berry);font-size:12px">'+s.name.split(':')[0].trim()+'</th>').join('')+
@@ -737,19 +817,19 @@ function renderResults(R) {
   const rows2=[
     {label:'Net Lift on All Volume',                          vals:R.sc.map(s=>pct(s.net))},
     {section:L.primLbl},
-    {label:L.primLbl+' - No Moves',  vals:R.sc.map(s=>fmtN(s.primB,true)),  dim:true},
-    {label:L.primLbl+' - With Moves',vals:R.sc.map(s=>fmtN(s.primW,true)),  bold:true},
-    {label:L.primLbl+' Incremental', vals:R.sc.map(s=>fmtPos(s.primI)),bold:true,green:true},
+    {label:L.primLbl+' - No Moves',  vals:R.sc.map(s=>fmtCV(s.primB,true)), dim:true},
+    {label:L.primLbl+' - With Moves',vals:R.sc.map(s=>fmtCV(s.primW,true)), bold:true},
+    {label:L.primLbl+' Incremental', vals:R.sc.map(s=>fmtCVPos(s.primI)),bold:true,green:true},
     {section:L.fyLbl},
-    {label:'Full Year - No Moves',   vals:R.sc.map(s=>fmtN(s.fyBase,true)+'  ('+pct(s.fyBP)+')'), dim:true},
-    {label:'Full Year - With Moves', vals:R.sc.map(s=>fmtN(s.fyW,true)+'  ('+pct(s.fyP)+')'),    bold:true},
+    {label:'Full Year - No Moves',   vals:R.sc.map(s=>fmtCV(s.fyBase,true)+'  ('+pct(s.fyBP)+')'), dim:true},
+    {label:'Full Year - With Moves', vals:R.sc.map(s=>fmtCV(s.fyW,true)+'  ('+pct(s.fyP)+')'),   bold:true},
     {section:L.secVs},
-    {label:L.secLbl+' - No Moves',  vals:R.sc.map(s=>fmtN(s.secB,true)+'  ('+pct(s.secBP)+')'), dim:true},
-    {label:L.secLbl+' - With Moves',vals:R.sc.map(s=>fmtN(s.secW,true)+'  ('+pct(s.secP)+')'),  bold:true},
-    {label:L.secLbl+' Incremental', vals:R.sc.map(s=>fmtPos(s.secI)), bold:true,green:true},
+    {label:L.secLbl+' - No Moves',  vals:R.sc.map(s=>fmtCV(s.secB,true)+'  ('+pct(s.secBP)+')'), dim:true},
+    {label:L.secLbl+' - With Moves',vals:R.sc.map(s=>fmtCV(s.secW,true)+'  ('+pct(s.secP)+')'), bold:true},
+    {label:L.secLbl+' Incremental', vals:R.sc.map(s=>fmtCVPos(s.secI)), bold:true,green:true},
     {section:'Combined'},
     {label:'Total Incremental Cases ('+L.primLbl+' + '+L.secLbl+')',
-                                     vals:R.sc.map(s=>fmtPos(s.combined)),bold:true,green:true,hi:true},
+                                     vals:R.sc.map(s=>fmtCVPos(s.combined)),bold:true,green:true,hi:true},
   ];
 
   rows2.forEach((row,ri)=>{
@@ -784,18 +864,18 @@ function renderResults(R) {
 
     active.forEach(r=>{
       html+='<tr><td class="tl">'+r.name+'</td>'+
-        '<td class="tr" style="color:var(--muted)">'+fmtN(r.actP,true)+'</td>'+
-        '<td class="tr" style="color:var(--muted)">'+fmtN(r.primB,true)+'</td>'+
-        '<td class="tr" style="font-weight:bold;color:var(--berry)">'+fmtN(r.primW,true)+'</td>'+
-        '<td class="tr" style="font-weight:bold;color:var(--green)">'+fmtPos(r.primI)+'</td></tr>';
+        '<td class="tr" style="color:var(--muted)">'+fmtCV(r.actP,true)+'</td>'+
+        '<td class="tr" style="color:var(--muted)">'+fmtCV(r.primB,true)+'</td>'+
+        '<td class="tr" style="font-weight:bold;color:var(--berry)">'+fmtCV(r.primW,true)+'</td>'+
+        '<td class="tr" style="font-weight:bold;color:var(--green)">'+fmtCVPos(r.primI)+'</td></tr>';
     });
     const tActP=active.reduce((a,r)=>a+r.actP,0);
     html+='<tr style="background:var(--cream);font-weight:bold;color:var(--berry)">'+
       '<td class="tl">TOTAL</td>'+
-      '<td class="tr">'+fmtN(tActP,true)+'</td>'+
-      '<td class="tr">'+fmtN(sc.primB,true)+'</td>'+
-      '<td class="tr">'+fmtN(sc.primW,true)+'</td>'+
-      '<td class="tr">'+fmtPos(sc.primI)+'</td></tr>'+
+      '<td class="tr">'+fmtCV(tActP,true)+'</td>'+
+      '<td class="tr">'+fmtCV(sc.primB,true)+'</td>'+
+      '<td class="tr">'+fmtCV(sc.primW,true)+'</td>'+
+      '<td class="tr">'+fmtCVPos(sc.primI)+'</td></tr>'+
       '</tbody></table></div>';
   });
 
@@ -820,13 +900,23 @@ function switchTab(i){
   document.querySelectorAll('.tab-panel').forEach((p,j)=>p.classList.toggle('active',j===i));
   if(i===2) recalc();
   if(i===3){ const R=calc(); renderMath(R); }
+  if(i===4){ const R=calc(); renderShelf(R); }
+}
+
+function setUnitMode(m){
+  SHOW_DOLLARS = m;
+  gv('unit-cases').className   = m===0 ? 'unit-btn active' : 'unit-btn';
+  gv('unit-dollars').className = m===1 ? 'unit-btn active' : 'unit-btn';
+  const warn = gv('no-price-warn');
+  if(warn) warn.style.display = (m===1 && getBlendedPrice()<=0) ? 'block' : 'none';
+  recalc();
 }
 
 // ── Clear ─────────────────────────────────────────────────────────────────────
 function clearAll(){
   if(!confirm('Clear all data and reset settings?')) return;
   SKUS.forEach(s=>{s.name='';s.h1ly='';s.h2ly='';s.h1cy='';s.h2cy='';});
-  gv('g-dh1ly').value='182'; gv('g-dh2ly').value='183'; gv('g-dh1cy').value='182'; gv('g-dh2cy').value='183'; gv('g-manual-trend').value='';
+  gv('g-dh1ly').value='182'; gv('g-dh2ly').value='183'; gv('g-dh1cy').value='182'; gv('g-dh2cy').value='183'; gv('g-manual-trend').value=''; gv('g-ppc').value='';
   buildSkuRows(); recalc();
 }
 
@@ -1013,6 +1103,203 @@ function renderMath(R) {
 
   cont.innerHTML = html;
 }
+
+// ── Shelf Value tab ───────────────────────────────────────────────────────────
+function renderShelf(R) {
+  const cont = gv('shelf-inner');
+  const bp = getBlendedPrice();
+
+  const fi2 = n => isNaN(n)||n===null ? '-' : '$'+Math.round(Math.abs(n)).toLocaleString();
+  const fi3 = n => isNaN(n)||n===null ? '-' : '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const idx2 = n => isNaN(n)||n===null ? '-' : n.toFixed(2);
+  const pct2 = n => isNaN(n) ? '-' : (n>=0?'+':'')+n.toFixed(1)+'%';
+
+  // Read shelf inputs
+  const stores      = num(gv('sv-stores')     ? gv('sv-stores').value      : 0);
+  const brandLF     = num(gv('sv-brandLF')    ? gv('sv-brandLF').value     : 0);
+  const catLF       = num(gv('sv-catLF')      ? gv('sv-catLF').value       : 0);
+  const catDollars  = num(gv('sv-catDollars') ? gv('sv-catDollars').value  : 0);
+  const brandOver   = num(gv('sv-brandOver')  ? gv('sv-brandOver').value   : 0);
+  const bottleW     = Math.max(0.1, num(gv('sv-bottleW') ? gv('sv-bottleW').value : 3.0));
+  const tier        = gv('sv-tier')           ? gv('sv-tier').value         : 'eye';
+  const idxEye      = Math.max(0.01, num(gv('sv-idx-eye')   ? gv('sv-idx-eye').value   : 1.5));
+  const idxBelow    = Math.max(0.01, num(gv('sv-idx-below') ? gv('sv-idx-below').value : 1.2));
+  const idxAbove    = Math.max(0.01, num(gv('sv-idx-above') ? gv('sv-idx-above').value : 0.9));
+  const idxBottom   = Math.max(0.01, num(gv('sv-idx-bottom')? gv('sv-idx-bottom').value: 0.6));
+  const idxMap = {eye:idxEye, below:idxBelow, above:idxAbove, bottom:idxBottom};
+  const tierNames = {eye:'Eye Level',below:'Below Eye (Arm)',above:'Above Eye (Reach)',bottom:'Bottom (Foot)'};
+
+  // Brand dollar sales
+  const brandCasesLY = R.sumLY;
+  const brandDollarsCalc = bp > 0 ? brandCasesLY * bp : 0;
+  const brandDollars = brandOver > 0 ? brandOver : brandDollarsCalc;
+
+  // Total linear feet
+  const brandLFTotal = brandLF * stores;
+  const catLFTotal   = catLF   * stores;
+
+  // Core metrics
+  const brandDPLF  = brandLFTotal > 0 ? brandDollars / brandLFTotal : 0;
+  const catDPLF    = catLFTotal   > 0 ? catDollars   / catLFTotal   : 0;
+  const brandIndex = catDPLF > 0 ? (brandDPLF / catDPLF) * 100 : 0;
+  const fairShareLF = catDollars > 0 ? (brandDollars / catDollars) * catLFTotal : 0;
+  const spaceGap    = fairShareLF - brandLFTotal;
+  const bottleWFt   = bottleW / 12;
+
+  // Dollar value per linear foot and per facing at each tier
+  const tiers = [
+    {key:'eye',   label:'Eye Level',            idx:idxEye   },
+    {key:'below', label:'Below Eye (Arm)',       idx:idxBelow },
+    {key:'above', label:'Above Eye (Reach)',     idx:idxAbove },
+    {key:'bottom',label:'Bottom (Foot)',         idx:idxBottom},
+  ];
+
+  let html = '';
+
+  // ── No price warning ──────────────────────────────────────────────────────
+  if (bp <= 0) {
+    html += '<div style="background:#FFFBEB;border-left:3px solid #D97706;border-radius:6px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400E">' +
+      '<strong>Price per case not set.</strong> Enter a Wholesale Price Per Case in Data Entry to enable brand dollar calculations. ' +
+      'You can still explore the shelf tier dollar values below using category data alone.</div>';
+  }
+
+  // ── Top grid: Brand + Category inputs ────────────────────────────────────
+  html += '<div class="sv-grid">';
+
+  // Left card: Brand data
+  html += '<div class="sv-section"><div class="sv-section-hd">Brand Data</div><div class="sv-body">';
+  html += '<div class="sv-field"><label>Brand Last Year Cases (from Data Entry)</label>' +
+    '<div class="sv-derived">'+(R.sumLY>0?Math.round(R.sumLY).toLocaleString():'-')+'</div>' +
+    '<div class="sv-note">H1 LY + H2 LY total from your Data Entry tab</div></div>';
+  html += '<div class="sv-field"><label>Wholesale Price Per Case ($): set in Data Entry</label>' +
+    '<div class="sv-derived">'+(bp>0?'$'+bp.toFixed(2):'-')+'</div></div>';
+  html += '<div class="sv-field"><label>Brand Dollar Sales: Calculated</label>' +
+    '<div class="sv-derived" style="color:'+(brandDollarsCalc>0?'var(--berry)':'var(--muted)')+'">'+
+    (brandDollarsCalc>0?fi2(brandDollarsCalc):'Needs price')+'</div>' +
+    '<div class="sv-note">Cases x Price/Case. Wholesale estimate, not retail scanner dollars.</div></div>';
+  html += '<div class="sv-field"><label>Override Brand Dollar Sales (optional)</label>' +
+    '<input type="number" id="sv-brandOver" value="'+(gv('sv-brandOver')?gv('sv-brandOver').value:'')+'" min="0" placeholder="e.g. 8500000" ' +
+    'oninput="SHELF.brandOverride=this.value;if(document.getElementById(\'panel-4\').classList.contains(\'active\')){renderShelf(lastR);}">' +
+    '<div class="sv-note">Use if you have syndicated retail dollar data. Overrides the calculated figure above.</div></div>';
+  html += '</div></div>';
+
+  // Right card: Store/Category inputs
+  html += '<div class="sv-section"><div class="sv-section-hd">Store and Category Inputs</div><div class="sv-body">';
+  const svFld = (id,lbl,ph,note) => {
+    const el=gv(id); const v=el?el.value:'';
+    return '<div class="sv-field"><label>'+lbl+'</label>'+
+      '<input type="number" id="'+id+'" value="'+v+'" min="0" placeholder="'+ph+'" oninput="shelfChanged()">'+
+      '<div class="sv-note">'+note+'</div></div>';
+  };
+  html += svFld('sv-stores',    'Number of Stores',                      'e.g. 250',      'Total stores in scope for this analysis');
+  html += svFld('sv-brandLF',   'Brand Linear Feet Per Store (current)', 'e.g. 4',        'Physical feet of shelf your brand currently holds per store');
+  html += svFld('sv-catLF',     'Category Linear Feet Per Store (total)','e.g. 40',       'Total shelf footage of the category per store');
+  html += svFld('sv-catDollars','Category Dollar Sales (Annual, Total)', 'e.g. 12000000', 'From buyer syndicated data (IRI/Circana/Nielsen). Use the same dollar basis as brand (retail or wholesale, not mixed).');
+  html += svFld('sv-bottleW',   'Bottle Width (inches)',                  '3.0',           'Standard 750ml wine bottle: approx 3.0 inches. Adjusts facing value calculation.');
+  html += '</div></div>';
+  html += '</div>'; // sv-grid
+
+  // ── Shelf productivity index ─────────────────────────────────────────────
+  html += '<div class="sv-section"><div class="sv-section-hd">Shelf Productivity Index (editable)</div><div class="sv-body">' +
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:12px">Default values from retail category management benchmarks. Eye level = 1.5x reflects the strongest shopper engagement. Adjust if you have chain-specific data.</div>' +
+    '<div class="sv-idx-grid">';
+  [
+    {id:'sv-idx-eye',   label:'Eye Level',       def:'1.5'},
+    {id:'sv-idx-below', label:'Below Eye (Arm)', def:'1.2'},
+    {id:'sv-idx-above', label:'Above Eye (Reach)','def':'0.9'},
+    {id:'sv-idx-bottom',label:'Bottom (Foot)',   def:'0.6'},
+  ].forEach(f => {
+    const el = gv(f.id);
+    html += '<div class="sv-idx-card"><label>'+f.label+'</label>' +
+      '<input type="number" id="'+f.id+'" value="'+(el?el.value:f.def)+'" min="0.1" step="0.1" oninput="shelfChanged()"></div>';
+  });
+  html += '</div>';
+
+  // Current tier selector
+  html += '<div style="margin-top:12px;display:flex;align-items:center;gap:12px">' +
+    '<label style="font-size:11px;color:var(--muted);white-space:nowrap">Brand\'s Current Shelf Tier:</label>' +
+    '<select id="sv-tier" onchange="shelfChanged()" ' +
+    'style="border:1px solid var(--rose);border-radius:6px;padding:4px 8px;font-size:13px;font-family:inherit;color:var(--dark)">';
+  ['eye','below','above','bottom'].forEach(t => {
+    const sel = (gv('sv-tier') ? gv('sv-tier').value : 'eye') === t;
+    html += '<option value="'+t+'"'+(sel?' selected':'')+'>'+tierNames[t]+'</option>';
+  });
+  html += '</select></div>';
+  html += '</div></div>';
+
+  // ── Results ─────────────────────────────────────────────────────────────
+  const hasCalc = brandDollars > 0 && brandLFTotal > 0 && catLFTotal > 0 && catDollars > 0;
+
+  // Key metrics cards
+  html += '<div class="sv-grid">';
+
+  // Left: space analysis
+  html += '<div class="sv-section"><div class="sv-section-hd">Space Analysis</div><div class="sv-body">';
+  html += '<table class="sv-result-table">';
+  const spaceRows = [
+    {lbl:'Brand $/Linear Foot',       val:fi3(brandDPLF),  cls:''},
+    {lbl:'Category $/Linear Foot',    val:fi3(catDPLF),    cls:''},
+    {lbl:'Brand Productivity Index',  val:hasCalc ? idx2(brandIndex) : '-',
+      cls: brandIndex>=100?'pos':brandIndex>0&&brandIndex<100?'neg':''},
+    {lbl:'',val:'', divider:true},
+    {lbl:'Brand Current Space (total)', val: brandLFTotal>0?brandLFTotal.toFixed(1)+' ft':'-', cls:''},
+    {lbl:'Brand Fair-Share Space',      val: fairShareLF>0?fairShareLF.toFixed(1)+' ft':'-',  cls:''},
+    {lbl:'Space Gap (+ = underspaced)', val: hasCalc ? (spaceGap>=0?'+':'')+spaceGap.toFixed(1)+' ft' : '-',
+      cls: spaceGap>0?'pos':spaceGap<0?'neg':''},
+  ];
+  spaceRows.forEach(r => {
+    if (r.divider) { html += '<tr><td colspan="2" style="height:1px;background:var(--cream);padding:0"></td></tr>'; return; }
+    html += '<tr><td class="lbl">'+r.lbl+'</td><td class="val '+r.cls+'">'+r.val+'</td></tr>';
+  });
+  html += '</table>';
+  if (hasCalc) {
+    const interp = brandIndex >= 105 ? 'Brand is generating above-average revenue per foot. Strong case for maintaining or growing space.'
+      : brandIndex >= 95 ? 'Brand is generating near-average revenue per foot. In line with category contribution.'
+      : 'Brand is generating below-average revenue per foot. Space justification requires velocity or trend argument.';
+    html += '<div class="sv-interpret">'+interp+'</div>';
+  }
+  html += '</div></div>';
+
+  // Right: dollar value per foot / facing
+  html += '<div class="sv-section"><div class="sv-section-hd">Dollar Value Per Linear Foot and Per Facing</div><div class="sv-body">';
+  if (catDPLF <= 0) {
+    html += '<p style="font-size:12px;color:var(--muted)">Enter store count, category linear feet, and category dollar sales to calculate shelf value.</p>';
+  } else {
+    html += '<table class="sv-result-table">';
+    html += '<tr style="background:var(--cream)"><td class="lbl" style="font-size:11px;font-weight:bold;color:var(--berry)">Shelf Tier</td>' +
+      '<td class="val" style="font-size:11px;font-weight:bold;color:var(--berry)">$/Linear Ft</td>' +
+      '<td class="val" style="font-size:11px;font-weight:bold;color:var(--berry)">$/Facing ('+bottleW+'\")</td></tr>';
+    tiers.forEach(t => {
+      const dolLF   = catDPLF * t.idx;
+      const dolFace = dolLF * bottleWFt;
+      const isCur   = t.key === tier;
+      const rowCls  = isCur ? 'sv-tier-row' : '';
+      html += '<tr class="'+rowCls+'">'+
+        '<td class="lbl">'+(isCur?'&#9654; ':'')+t.label+' ('+idx2(t.idx)+'x)'+'</td>'+
+        '<td class="val">'+fi3(dolLF)+'</td>'+
+        '<td class="val">'+fi3(dolFace)+'</td></tr>';
+    });
+    html += '</table>';
+    html += '<div class="sv-interpret">Values represent estimated category revenue generated per unit of space at each tier. ' +
+      'Current tier shown with &#9654;. ' +
+      'Gaining one facing at eye level vs. bottom generates approximately '+fi3(catDPLF*(idxEye-idxBottom)*bottleWFt)+' per year in additional category revenue per store. ' +
+      'Source: shelf productivity index benchmarks from category management research (adjustable above).</div>';
+  }
+  html += '</div></div>';
+  html += '</div>'; // sv-grid
+
+  // Scientific footnote
+  html += '<div class="footnote">Dollar figures are estimated wholesale revenue (cases x price/case), not retail scanner data. ' +
+    'If using syndicated retail dollars for category sales alongside wholesale brand dollars, the fair-share calculation will understate brand\'s true share. ' +
+    'Use the same dollar basis throughout for valid comparisons. ' +
+    'Productivity index values are category management benchmarks and vary by chain, category, and store format. ' +
+    'All calculations run at full precision and round only for display.</div>';
+
+  cont.innerHTML = html;
+}
+
+let lastR = null;
+function shelfChanged(){ if(lastR) renderShelf(lastR); }
 </script>
 </body>
 </html>
