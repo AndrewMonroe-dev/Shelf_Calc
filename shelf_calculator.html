@@ -79,6 +79,7 @@
   .opt-hd { color: var(--sand); font-style: italic; text-align: right; }
   .opt-cell { text-align: right; font-size: 12px; color: var(--rose); }
   .h1cy-note { font-size: 10px; color: #D97706; font-style: italic; padding: 3px 6px; background:#FFFBEB; border-radius:4px; display:none; }
+  .thin-data-warn { background:#FEF2F2; border-left:3px solid #B91C1C; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:12px; color:#7F1D1D; display:none; line-height:1.6; }
 
   /* Scenario cards */
   .sc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
@@ -228,6 +229,9 @@
     <div id="partial-entry-warn" style="display:none;background:#FFFBEB;border-left:3px solid #D97706;border-radius:6px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#92400E">
       <strong>Partial data entry:</strong> <span id="partial-entry-detail"></span> The trend rate is computed only from brands or SKUs that have both Last Year and Current Year data, so unfilled rows do not distort it. Fill every active row for a complete trend.
     </div>
+    <div class="thin-data-warn" id="thin-data-warn">
+      <strong>Insufficient data for reliable trend:</strong> <span id="thin-data-detail"></span>
+    </div>
 
     <!-- Settings -->
     <div class="settings-row">
@@ -331,7 +335,8 @@
 
 <script>
 let MODE = 0;         // 0 = Projecting H2, 1 = Projecting H1 Next Year
-let SHOW_DOLLARS = 0; // 0 = cases, 1 = estimated wholesale dollars
+let SHOW_DOLLARS    = 0; // 0 = cases, 1 = estimated wholesale dollars
+let USE_H1_FALLBACK = 0; // 0 = use active period trend, 1 = use H1 LY vs H1 CY trend (fallback when H2 thin)
 
 // Shelf value tab state
 const SHELF = {
@@ -601,8 +606,19 @@ function calc() {
   const dailyRefLY_matched = nMatched > 0 ? matchRefLY / dRef : 0;
   const dailyActCY_matched = nMatched > 0 ? matchActCY / dAct : 0;
 
-  const trend     = usingManual ? manualRate
-                  : (dailyRefLY_matched > 0 ? dailyActCY_matched / dailyRefLY_matched - 1 : 0);
+  // H1 fallback: in Mode 1 with thin H2 data, use H1 CY vs H1 LY as trend driver
+  const useH1Fallback = MODE===1 && USE_H1_FALLBACK===1 && !usingManual;
+  let trend;
+  if (useH1Fallback) {
+    // H1 full-period comparison: always reliable (complete periods, same seasonal window)
+    const h1cyTotal = rows.reduce((a,r)=>a+r.h1cy, 0);
+    const h1DailyLY = sumH1LY > 0 ? sumH1LY / dh1ly : 0;
+    const h1DailyCY = h1cyTotal > 0 ? h1cyTotal / dh1cy : 0;
+    trend = h1DailyLY > 0 ? h1DailyCY / h1DailyLY - 1 : 0;
+  } else {
+    trend = usingManual ? manualRate
+          : (dailyRefLY_matched > 0 ? dailyActCY_matched / dailyRefLY_matched - 1 : 0);
+  }
   const isPartial = !usingManual && dAct < dRef;
   // Some-but-not-all CY data entered: flag it so the UI can warn.
   const partialEntry = !usingManual && hasActData && nRefOnly > 0;
@@ -691,7 +707,9 @@ function calc() {
   return {
     rows, sumH1LY, sumH2LY, sumActP, actPNorm, sumLY,
     trend:trend*100, sumPrimProj, sumSecProj, fyBase,
-    isPartial, dAct, dRef, dPrim,
+    isPartial, thinData: !usingManual && dAct < dRef*0.25, useH1Fallback,
+    thinPct: Math.round((dAct/dRef)*100),
+    dAct, dRef, dPrim,
     matchRefLY, matchActCY, nMatched, nRefOnly,
     dailyRefLY_matched, dailyActCY_matched, dailyPrimLY,
     sumRefLY: MODE===0?sumH1LY:sumH2LY,
@@ -757,6 +775,27 @@ function recalc() {
     } else pw.style.display='none';
   }
 
+  // Show/hide thin-data warning
+  const tw=gv('thin-data-warn');
+  if(tw){
+    if(R.thinData){
+      tw.style.display='block';
+      const periodName = MODE===0 ? 'H1 Current Year' : 'H2 Current Year';
+      const refName    = MODE===0 ? 'H1 Last Year'    : 'H2 Last Year';
+      gv('thin-data-detail').innerHTML =
+        'Only <strong>'+R.thinPct+'%</strong> of the '+periodName+' period has elapsed ('+R.dAct+' of '+R.dRef+' days). '+
+        'Early-period daily rates are structurally unreliable as trend signals because the elapsed days may not represent the full period seasonally. '+
+        'The trend rate shown is mathematically correct but statistically thin. '+
+        'Consider using the H1 full-period comparison instead (button below), or wait until more of the period has elapsed before projecting.';
+      const fb=gv('h1-fallback-wrap');
+      if(fb) fb.style.display='block';
+    } else {
+      tw.style.display='none';
+      const fb=gv('h1-fallback-wrap');
+      if(fb && MODE===0) fb.style.display='none'; // hide in Mode 0
+    }
+  }
+
   const dc=gv('decline-card');
   if(R.hasData && (R.hasActData || R.usingManual)){
     dc.style.display='block';
@@ -768,9 +807,14 @@ function recalc() {
     const tip=gv('decline-tip');
     if(tip) tip.textContent = R.usingManual
       ? 'Manually estimated. No current year data. All projections are speculative.'
-      : R.isPartial
-        ? 'Partial period ('+R.dAct+' of '+R.dRef+' days). Daily-rate normalized.'
-        : 'Full same-period comparison on daily-rate basis.';
+      : R.useH1Fallback
+        ? 'H1 Fallback: derived from complete H1 CY vs H1 LY comparison. More reliable than thin H2 data.'
+        : R.isPartial
+          ? 'Partial period ('+R.dAct+' of '+R.dRef+' days). Daily-rate normalized.'
+          : 'Full same-period comparison on daily-rate basis.';
+    if(tl) tl.textContent = R.useH1Fallback ? 'H1 Fallback Trend Rate'
+      : R.usingManual ? 'Estimated Trend Rate'
+      : (MODE===0?'H1 Trend Rate':'H2 Trend Rate');
   } else dc.style.display='none';
 
   renderResults(R);
@@ -808,7 +852,7 @@ function renderResults(R) {
   html+='</div>';
 
   // Comparison table
-  html+='<div class="cmp-wrap"><div class="cmp-hd">Three-Scenario Comparison'+(R.usingManual?': ESTIMATED (No Current Year Data)':'')+' <span style="font-size:11px;opacity:.75;font-weight:normal">('+unitLabel()+')</span>'+'</div><table>'+
+  html+='<div class="cmp-wrap"><div class="cmp-hd">Three-Scenario Comparison'+(R.usingManual?': ESTIMATED (No Current Year Data)':R.useH1Fallback?' [H1 Fallback Trend Active]':'')+' <span style="font-size:11px;opacity:.75;font-weight:normal">('+unitLabel()+')</span>'+'</div><table>'+
     '<thead><tr style="background:var(--cream)">'+
     '<th class="tl" style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;min-width:240px">Metric</th>'+
     R.sc.map(s=>'<th class="tr" style="color:var(--berry);font-size:12px">'+s.name.split(':')[0].trim()+'</th>').join('')+
@@ -885,7 +929,9 @@ function renderResults(R) {
       : 'Trend rate uses a daily-rate comparison: ('+L.actP+' cases ÷ days entered) ÷ (same-period Last Year cases ÷ days). '+
         (R.isPartial?'Active period is '+R.dAct+' of '+R.dRef+' days. Daily rate automatically normalizes for partial periods; seasonal distribution variance not accounted for. ':'')+
         (MODE===1 && R.h1cyBaseUsed ? 'H1 Current Year data was used as the projection base for H1 Next Year (more accurate than H1 Last Year). ' : '')+
-        (MODE===1 && !R.h1cyBaseUsed ? 'H1 Current Year not entered. H1 Last Year used as projection base. Enter H1 CY in the optional column for a more accurate H1 Next Year projection. ' : '')
+        (MODE===1 && !R.h1cyBaseUsed ? 'H1 Current Year not entered. H1 Last Year used as projection base. Enter H1 CY in the optional column for a more accurate H1 Next Year projection. ' : '')+
+        (R.useH1Fallback ? 'H1 Fallback mode active: trend rate derived from complete H1 CY vs H1 LY comparison rather than thin H2 data. ' : '')+
+        (R.thinData && !R.useH1Fallback ? 'WARNING: H2 data covers only '+R.thinPct+'% of the period. Trend rate is statistically unreliable. Consider enabling H1 Fallback. ' : '')
     )+
     'Full period assumed to benefit from shelf moves from day one. Ceiling timing assumption. '+
     'All calculations run at full precision and round only for display, so a hand-summed column may differ from a shown total by a case or two. All excluded variables (compliance, facings, competitive context) bias results toward overstatement. Treat as ceiling estimates.'+
@@ -901,6 +947,14 @@ function switchTab(i){
   if(i===2) recalc();
   if(i===3){ const R=calc(); renderMath(R); }
   if(i===4){ const R=calc(); renderShelf(R); }
+}
+
+function setFallback(m){
+  USE_H1_FALLBACK = m;
+  const b0=gv('fb-btn-0'), b1=gv('fb-btn-1');
+  if(b0) b0.className = m===0 ? 'unit-btn active' : 'unit-btn';
+  if(b1) b1.className = m===1 ? 'unit-btn active' : 'unit-btn';
+  recalc();
 }
 
 function setUnitMode(m){
