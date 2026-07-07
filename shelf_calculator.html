@@ -235,7 +235,7 @@
     <!-- SKU Table -->
     <div class="tbl-wrap">
       <div class="tbl-hd" id="tbl-hd-row">
-        <div>SKU Name</div>
+        <div>Brand or SKU</div>
         <div class="right">H1 Last Year</div>
         <div class="right">H2 Last Year</div>
         <div class="right" id="col-actP">H1 Current Year</div>
@@ -373,7 +373,7 @@ function buildSkuRows() {
     const row = document.createElement('div');
     row.className = isM1 ? 'tbl-row tbl-6' : 'tbl-row';
     let inner =
-      '<div><input type="text" value="'+s.name+'" placeholder="SKU '+(s.id+1)+'" '+
+      '<div><input type="text" value="'+s.name+'" placeholder="Brand or SKU '+(s.id+1)+'" '+
         'oninput="SKUS['+s.id+'].name=this.value"></div>'+
       '<div><input type="number" value="'+s.h1ly+'" placeholder="0" min="0" '+
         'oninput="SKUS['+s.id+'].h1ly=this.value;recalc()"></div>'+
