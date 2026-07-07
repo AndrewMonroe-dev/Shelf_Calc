@@ -58,6 +58,11 @@
   .set-card.dark .bigval { color: var(--white); }
   .set-card .tip { font-size: 10px; color: var(--rose); margin-top: 4px; }
   .set-card.dark .tip { color: #E8C8D0; }
+  .set-card.estimate { background: #FFFBEB; border-left: 3px solid #D97706; }
+  .set-card.estimate label { color: #92400E; }
+  .set-card.estimate input { color: #92400E; border-color: #D97706; }
+  .set-card.estimate .bigval { color: #D97706; font-size: 18px; }
+  .set-card.estimate .tip { color: #B45309; }
   .set-card input { font-size: 20px; font-weight: bold; color: var(--berry); border-color: rgba(162,103,105,.4); }
 
   /* SKU Table */
@@ -178,6 +183,13 @@
         <label id="lbl-dh2cy">Days in H2 — Current Year</label>
         <input type="number" id="g-dh2cy" value="183" min="1" max="200" step="1" oninput="recalc()">
         <div class="tip" id="tip-dh2cy">Full H2 = leave at 183. Mid-H2 = enter actual days of data you have.</div>
+      </div>
+      <div id="manual-trend-wrap" style="display:none;flex:1 1 160px">
+        <div class="set-card estimate">
+          <label id="manual-trend-label">Estimated Trend Rate %</label>
+          <input type="number" id="g-manual-trend" value="" step="0.1" placeholder="e.g. -4.6" oninput="recalc()">
+          <div class="tip">No current year data. Enter your best estimate. Positive = growth, negative = decline.</div>
+        </div>
       </div>
       <div class="set-card dark" id="decline-card" style="display:none">
         <label id="trend-label">H1 Trend Rate</label>
@@ -429,19 +441,44 @@ function calc() {
   const dailyActCY  = sumActP   / dAct;
   const dailyPrimLY = sumPrimLY / dPrim;
 
-  const trend     = dailyRefLY > 0 ? dailyActCY / dailyRefLY - 1 : 0;
-  const isPartial = dAct < dRef;
-  const actPNorm  = dailyActCY * dRef;
+  const hasActData   = sumActP > 0;
+  const manualInput  = gv('g-manual-trend').value.trim();
+  const usingManual  = !hasActData && manualInput !== '';
+  const manualRate   = parseFloat(manualInput) / 100 || 0;
 
+  const trend     = usingManual ? manualRate
+                  : (dailyRefLY > 0 ? dailyActCY / dailyRefLY - 1 : 0);
+  const isPartial = !usingManual && dAct < dRef;
+
+  // Normalized active period
+  // Manual mode: estimate from same-period LY × trend
+  // Data mode:   actual daily rate × reference period days
+  const actPNorm  = usingManual ? sumRefLY * (1 + trend)
+                                : dailyActCY * dRef;
+
+  // Primary projection: LY primary daily rate × trend × target days
   const sumPrimProj = dailyPrimLY * (1 + trend) * dPrim;
-  const sumSecProj  = dailyActCY  * (1 + trend) * dRef;
+
+  // Secondary projection
+  // Manual mode: actPNorm (estimated CY) × trend = two steps from LY
+  // Data mode:   CY daily rate × trend × ref days
+  const sumSecProj  = usingManual ? actPNorm * (1 + trend)
+                                  : dailyActCY * (1 + trend) * dRef;
 
   rows.forEach(r => {
-    const rDailyActCY  = r.actP / dAct;
-    const rDailyPrimLY = (MODE===0 ? r.h2ly : r.h1ly) / dPrim;
-    r.actPNorm = rDailyActCY * dRef;
-    r.primProj = rDailyPrimLY * (1 + trend) * dPrim;
-    r.secProj  = rDailyActCY  * (1 + trend) * dRef;
+    if (usingManual) {
+      const rRefLY  = (MODE===0 ? r.h1ly : r.h2ly);
+      const rPrimLY = (MODE===0 ? r.h2ly : r.h1ly);
+      r.actPNorm = rRefLY  * (1 + trend);
+      r.primProj = rPrimLY * (1 + trend);
+      r.secProj  = r.actPNorm * (1 + trend);
+    } else {
+      const rDailyActCY  = r.actP / dAct;
+      const rDailyPrimLY = (MODE===0 ? r.h2ly : r.h1ly) / dPrim;
+      r.actPNorm = rDailyActCY * dRef;
+      r.primProj = rDailyPrimLY * (1 + trend) * dPrim;
+      r.secProj  = rDailyActCY  * (1 + trend) * dRef;
+    }
   });
 
   const fyBase = actPNorm + sumPrimProj;
@@ -480,6 +517,7 @@ function calc() {
     rows, sumH1LY, sumH2LY, sumActP, actPNorm, sumLY,
     trend:trend*100, sumPrimProj, fyBase,
     isPartial, dAct, dRef,
+    hasActData, usingManual,
     hasData:sumLY>0, sc,
   };
 }
@@ -514,14 +552,24 @@ function recalc() {
   gv('tot-actp').textContent = tActP>0?tActP.toLocaleString():'—';
   gv('tot-proj').textContent = tProj>0?Math.round(tProj).toLocaleString():'—';
 
+  // Show/hide manual trend field
+  const mw=gv('manual-trend-wrap');
+  if(mw) mw.style.display = (R.hasData && !R.hasActData) ? 'flex' : 'none';
+
   const dc=gv('decline-card');
-  if(R.hasData){
+  if(R.hasData && (R.hasActData || R.usingManual)){
     dc.style.display='block';
     gv('decline-val').textContent=pct(R.trend);
+    dc.className = R.usingManual ? 'set-card estimate' : 'set-card dark';
+    const tl=gv('trend-label');
+    if(tl) tl.textContent = R.usingManual ? 'Estimated Trend Rate'
+      : (MODE===0?'H1 Trend Rate':'H2 Trend Rate');
     const tip=gv('decline-tip');
-    if(tip) tip.textContent=R.isPartial
-      ?'Partial period ('+R.dAct+' of '+R.dRef+' days). Daily-rate normalized. Positive = growth, negative = decline.'
-      :'Full same-period comparison on daily-rate basis. Positive = growth, negative = decline.';
+    if(tip) tip.textContent = R.usingManual
+      ? 'Manually estimated — no current year data. All projections are speculative.'
+      : R.isPartial
+        ? 'Partial period ('+R.dAct+' of '+R.dRef+' days). Daily-rate normalized. Positive = growth, negative = decline.'
+        : 'Full same-period comparison on daily-rate basis. Positive = growth, negative = decline.';
   } else dc.style.display='none';
 
   renderResults(R);
@@ -543,7 +591,8 @@ function renderResults(R) {
   let html='<div class="metrics-row">';
   [
     {label:'Last Year Total',      val:fmtN(R.sumLY),        sub:'H1 LY + H2 LY combined',                    dark:false},
-    {label:L.actP,                 val:fmtN(R.actPNorm),     sub:R.isPartial?'Partial period — normalized run rate':'Fixed — already happened', dark:false},
+    {label:L.actP,                 val:R.usingManual?'Estimated: '+fmtN(R.actPNorm):fmtN(R.actPNorm),
+      sub:R.usingManual?'No data — estimated from manual trend rate':R.isPartial?'Partial period — daily-rate normalized':'Fixed — already happened', dark:false},
     {label:L.primLbl+' Baseline',  val:fmtN(R.sumPrimProj),  sub:'Projected — no shelf changes',               dark:false},
     {label:L.trend,                val:pct(R.trend),          sub:R.isPartial?'Normalized partial period':'Same-period comparison. Positive = growth.',dark:true},
   ].forEach(m=>{
@@ -555,7 +604,7 @@ function renderResults(R) {
   html+='</div>';
 
   // Comparison table
-  html+='<div class="cmp-wrap"><div class="cmp-hd">Three-Scenario Comparison</div><table>'+
+  html+='<div class="cmp-wrap"><div class="cmp-hd">Three-Scenario Comparison'+(R.usingManual?' — ESTIMATED (No Current Year Data)':'')+'</div><table>'+
     '<thead><tr style="background:var(--cream)">'+
     '<th class="tl" style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;min-width:240px">Metric</th>'+
     R.sc.map(s=>'<th class="tr" style="color:var(--berry);font-size:12px">'+s.name.split('—')[0].trim()+'</th>').join('')+
@@ -629,8 +678,11 @@ function renderResults(R) {
   });
 
   html+='<div class="footnote">'+
-    'Trend rate uses a daily-rate comparison: ('+L.actP+' cases ÷ days entered) ÷ (same-period Last Year cases ÷ days). '+
-    (R.isPartial?'Active period is '+R.dAct+' of '+R.dRef+' days — daily rate automatically normalizes for partial periods; seasonal distribution variance is not accounted for. ':'')+
+    (R.usingManual
+      ? 'ESTIMATED MODE: No current year data was entered. Trend rate is manually provided. Primary projection = Last Year same-period × (1 + trend). Secondary projection compounds the trend twice from Last Year — treat with significantly more caution than data-driven projections. '
+      : 'Trend rate uses a daily-rate comparison: ('+L.actP+' cases ÷ days entered) ÷ (same-period Last Year cases ÷ days). '+
+        (R.isPartial?'Active period is '+R.dAct+' of '+R.dRef+' days — daily rate automatically normalizes for partial periods; seasonal distribution variance not accounted for. ':'')
+    )+
     'Full period assumed to benefit from shelf moves from day one — ceiling timing assumption. '+
     'All excluded variables (compliance, facings, competitive context) bias results toward overstatement — treat as ceiling estimates.'+
   '</div>';
@@ -649,7 +701,7 @@ function switchTab(i){
 function clearAll(){
   if(!confirm('Clear all SKU data and reset settings?')) return;
   SKUS.forEach(s=>{s.name='';s.h1ly='';s.h2ly='';s.h1cy='';s.h2cy='';});
-  gv('g-dh1ly').value='182'; gv('g-dh2ly').value='183'; gv('g-dh1cy').value='182'; gv('g-dh2cy').value='183';
+  gv('g-dh1ly').value='182'; gv('g-dh2ly').value='183'; gv('g-dh1cy').value='182'; gv('g-dh2cy').value='183'; gv('g-manual-trend').value='';
   buildSkuRows(); recalc();
 }
 
