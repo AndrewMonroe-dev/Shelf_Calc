@@ -606,15 +606,35 @@ function calc() {
   const dailyRefLY_matched = nMatched > 0 ? matchRefLY / dRef : 0;
   const dailyActCY_matched = nMatched > 0 ? matchActCY / dAct : 0;
 
-  // H1 fallback: in Mode 1 with thin H2 data, use H1 CY vs H1 LY as trend driver
+  // H1 fallback: in Mode 1 with thin H2 data, use seasonal decomposition driven by H1 trend
   const useH1Fallback = MODE===1 && USE_H1_FALLBACK===1 && !usingManual;
-  let trend;
+  let trend, seasonalInfo = null;
+
   if (useH1Fallback) {
-    // H1 full-period comparison: always reliable (complete periods, same seasonal window)
+    // Step 1: H1 YOY trend from complete, matched periods
     const h1cyTotal = rows.reduce((a,r)=>a+r.h1cy, 0);
     const h1DailyLY = sumH1LY > 0 ? sumH1LY / dh1ly : 0;
     const h1DailyCY = h1cyTotal > 0 ? h1cyTotal / dh1cy : 0;
     trend = h1DailyLY > 0 ? h1DailyCY / h1DailyLY - 1 : 0;
+
+    // Step 2: Seasonal structure from Last Year (the unused signal)
+    const fyLY = sumH1LY + sumH2LY;
+    const h1Share = fyLY > 0 ? sumH1LY / fyLY : 0.5;
+    const h2Share = fyLY > 0 ? sumH2LY / fyLY : 0.5;
+    const seasRatio = sumH1LY > 0 ? sumH2LY / sumH1LY : 1.0;
+
+    // Step 3: Full-year CY estimate from H1 CY actual + seasonal share
+    //         (H2 CY estimated by applying H1 trend to H2 LY seasonal base)
+    const h2CYest = sumH2LY * (1 + trend);
+    const fyCYest = h1cyTotal + h2CYest;
+
+    // Step 4: Full-year NY projection, distributed by seasonal shares
+    const fyNYest = fyCYest * (1 + trend);
+    const h1NYest = fyNYest * h1Share;  // = h1cyTotal * (1+trend)  [algebraically]
+    const h2NYest = fyNYest * h2Share;  // grounded in seasonal structure
+
+    seasonalInfo = { h1cyTotal, h2CYest, fyCYest, fyNYest,
+                     h1NYest, h2NYest, h1Share, h2Share, seasRatio, fyLY };
   } else {
     trend = usingManual ? manualRate
           : (dailyRefLY_matched > 0 ? dailyActCY_matched / dailyRefLY_matched - 1 : 0);
@@ -630,17 +650,24 @@ function calc() {
   // Normalized active period
   // Manual mode: estimate from same-period LY × trend
   // Data mode:   actual daily rate × reference period days
-  const actPNorm  = usingManual ? sumRefLY * (1 + trend)
-                                : (sumActP / dAct) * dRef;
-
   // Primary projection: LY primary daily rate × trend × target days
+  // Primary projection: H1 NY (same formula regardless of fallback)
   const sumPrimProj = dailyPrimLY * (1 + trend) * dPrim;
 
-  // Secondary projection
-  // Manual mode: actPNorm (estimated CY) × trend = two steps from LY
-  // Data mode:   CY daily rate × trend × ref days
-  const sumSecProj  = usingManual ? actPNorm * (1 + trend)
-                                  : (sumActP / dAct) * (1 + trend) * dRef;
+  // Secondary projection and actPNorm:
+  // In H1 fallback mode, override with seasonally grounded values from H2 LY
+  // eliminates dependency on thin H2 CY data for these outputs.
+  // In all other modes: use the standard daily-rate formulas.
+  let sumSecProj, actPNorm;
+  if (useH1Fallback && seasonalInfo) {
+    actPNorm   = seasonalInfo.h2CYest;  // H2 CY estimated from H2 LY × trend
+    sumSecProj = seasonalInfo.h2NYest;  // H2 NY from full-year seasonal model
+  } else {
+    actPNorm   = usingManual ? sumRefLY * (1 + trend)
+                             : (sumActP / dAct) * dRef;
+    sumSecProj = usingManual ? actPNorm * (1 + trend)
+                             : (sumActP / dAct) * (1 + trend) * dRef;
+  }
 
   // In Mode 1: H1 CY (if entered) is preferred over H1 LY as H1 NY projection base.
   // Days: H1 CY uses dh1cy; H1 LY uses dPrim (= dh1ly). Both project to dPrim length.
@@ -655,11 +682,23 @@ function calc() {
       r.primProj = rPrimLY * (1 + trend);
       r.secProj  = r.actPNorm * (1 + trend);
       r.usedH1CY = false;
+    } else if (useH1Fallback && seasonalInfo) {
+      // Seasonal decomposition: use seasonal structure from H2 LY, not thin H2 data
+      r.actPNorm = r.h2ly * (1 + trend);        // H2 CY estimate per SKU
+      r.secProj  = r.h2ly * (1 + trend);        // H2 NY = H2 LY × (1+trend) per SKU
+      // H1 NY: use H1 CY if entered in optional col, else H1 LY (standard path)
+      if (r.h1cy > 0) {
+        r.usedH1CY = true;
+        r.primProj = (r.h1cy / dh1cy) * (1 + trend) * dPrim;
+        sumH1CYMode1 += r.h1cy;
+      } else {
+        r.usedH1CY = false;
+        r.primProj = (r.h1ly / dPrim) * (1 + trend) * dPrim;
+      }
     } else {
       const rDailyActCY = r.actP / dAct;
       r.actPNorm = rDailyActCY * dRef;
       r.secProj  = rDailyActCY * (1 + trend) * dRef;
-      // Primary projection base: H1 CY (if Mode 1 and entered) else H1/H2 LY
       if (MODE===1 && r.h1cy > 0) {
         r.usedH1CY = true;
         r.primProj = (r.h1cy / dh1cy) * (1 + trend) * dPrim;
@@ -707,7 +746,7 @@ function calc() {
   return {
     rows, sumH1LY, sumH2LY, sumActP, actPNorm, sumLY,
     trend:trend*100, sumPrimProj, sumSecProj, fyBase,
-    isPartial, thinData: !usingManual && dAct < dRef*0.25, useH1Fallback,
+    isPartial, thinData: !usingManual && dAct < dRef*0.25, useH1Fallback, seasonalInfo,
     thinPct: Math.round((dAct/dRef)*100),
     dAct, dRef, dPrim,
     matchRefLY, matchActCY, nMatched, nRefOnly,
@@ -786,7 +825,7 @@ function recalc() {
         'Only <strong>'+R.thinPct+'%</strong> of the '+periodName+' period has elapsed ('+R.dAct+' of '+R.dRef+' days). '+
         'Early-period daily rates are structurally unreliable as trend signals because the elapsed days may not represent the full period seasonally. '+
         'The trend rate shown is mathematically correct but statistically thin. '+
-        'Consider using the H1 full-period comparison instead (button below), or wait until more of the period has elapsed before projecting.';
+        'The H1 Fallback below uses seasonal decomposition across all three available data points (H1 LY, H2 LY, H1 CY), producing more defensible H2 projections. Or wait until more of the period has elapsed.';
       const fb=gv('h1-fallback-wrap');
       if(fb) fb.style.display='block';
     } else {
@@ -808,7 +847,7 @@ function recalc() {
     if(tip) tip.textContent = R.usingManual
       ? 'Manually estimated. No current year data. All projections are speculative.'
       : R.useH1Fallback
-        ? 'H1 Fallback: derived from complete H1 CY vs H1 LY comparison. More reliable than thin H2 data.'
+        ? 'Seasonal decomposition: H1 trend applied to full-year seasonal structure. H2 projections grounded in LY seasonal base.'
         : R.isPartial
           ? 'Partial period ('+R.dAct+' of '+R.dRef+' days). Daily-rate normalized.'
           : 'Full same-period comparison on daily-rate basis.';
@@ -839,10 +878,16 @@ function renderResults(R) {
   [
     {label:'Last Year Total',      val:fmtCV(R.sumLY,true),  sub:'H1 LY + H2 LY combined',                    dark:false},
     {label:L.actP,                 val:R.usingManual?'Est: '+fmtCV(R.actPNorm,true):fmtCV(R.actPNorm,true),
-      sub:R.usingManual?'No data. Estimated from manual trend rate':R.partialEntry?'Some rows missing CY data. See warning':R.isPartial?'Partial period: daily-rate normalized':'Fixed. Already happened', dark:false},
+      sub:R.usingManual?'No data. Estimated from manual trend rate':R.useH1Fallback?'H2 CY seasonal estimate: H2 LY x (1 + H1 trend). Not derived from thin H2 data.':R.partialEntry?'Some rows missing CY data. See warning':R.isPartial?'Partial period: daily-rate normalized':'Fixed. Already happened', dark:false},
     ...(MODE===1 && !R.usingManual ? [{label:'H1 Current Year (optional)', val: R.h1cyBaseUsed ? fmtCV(R.sumH1CYMode1,true) : '-', sub: R.h1cyBaseUsed ? 'Used as H1 NY projection base (more accurate)' : 'Not entered. H1 LY used as projection base instead', dark:false}] : []),
     {label:L.primLbl+' Baseline',  val:fmtCV(R.sumPrimProj,true), sub:'Projected. No shelf changes',           dark:false},
     {label:L.trend,                val:pct(R.trend),          sub:R.isPartial?'Normalized partial period':'Same-period daily-rate comparison.',dark:true},
+    ...(R.useH1Fallback && R.seasonalInfo ? [{
+      label:'Seasonal Ratio H2/H1',
+      val: R.seasonalInfo.seasRatio.toFixed(3)+'x',
+      sub:'H2 LY / H1 LY. H2 is structurally '+((R.seasonalInfo.seasRatio-1)*100).toFixed(1)+'% larger than H1. Grounds H2 projections in seasonal structure.',
+      dark:false
+    }] : []),
   ].forEach(m=>{
     html+='<div class="met-card'+(m.dark?' dark':'')+'">'+
       '<div class="met-lbl">'+m.label+'</div>'+
@@ -930,7 +975,7 @@ function renderResults(R) {
         (R.isPartial?'Active period is '+R.dAct+' of '+R.dRef+' days. Daily rate automatically normalizes for partial periods; seasonal distribution variance not accounted for. ':'')+
         (MODE===1 && R.h1cyBaseUsed ? 'H1 Current Year data was used as the projection base for H1 Next Year (more accurate than H1 Last Year). ' : '')+
         (MODE===1 && !R.h1cyBaseUsed ? 'H1 Current Year not entered. H1 Last Year used as projection base. Enter H1 CY in the optional column for a more accurate H1 Next Year projection. ' : '')+
-        (R.useH1Fallback ? 'H1 Fallback mode active: trend rate derived from complete H1 CY vs H1 LY comparison rather than thin H2 data. ' : '')+
+        (R.useH1Fallback ? 'H1 Fallback mode active: seasonal decomposition uses H1 LY, H2 LY, and H1 CY together. H1 trend applied to full-year seasonal structure. H2 projections grounded in LY seasonal base rather than thin H2 data. ' : '')+
         (R.thinData && !R.useH1Fallback ? 'WARNING: H2 data covers only '+R.thinPct+'% of the period. Trend rate is statistically unreliable. Consider enabling H1 Fallback. ' : '')
     )+
     'Full period assumed to benefit from shelf moves from day one. Ceiling timing assumption. '+
@@ -1111,6 +1156,42 @@ function renderMath(R) {
     fp((R.fyBase/fyLY-1)*100), trendColor);
   html += '</div></div>';
   html += '</div>'; // close math-grid
+
+  // ── SECTION 4b: Seasonal Decomposition (H1 fallback only) ───────────────────
+  if (R.useH1Fallback && R.seasonalInfo) {
+    const si = R.seasonalInfo;
+    html += '<div class="math-card full"><div class="math-hd">④b Seasonal Decomposition (H1 Fallback Mode)</div><div class="math-body">';
+    html += '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Three data points are used: H1 Last Year, H2 Last Year, and H1 Current Year. The H1 trend is derived from the two complete, matched H1 periods, then distributed across the full year using the seasonal structure from Last Year. This eliminates dependence on thin H2 data for any projection.</div>';
+    html += step('H1 trend rate (from complete periods)',
+      fi(si.h1cyTotal)+' cases / '+dh1cy+'d  vs  '+fi(R.sumH1LY)+' cases / '+dh1ly+'d',
+      fp(R.trend*100 > 0 ? R.trend : R.trend), trendColor+' key');
+    html += step('Seasonal ratio H2/H1 (from LY)',
+      fi(R.sumH2LY)+' H2 LY / '+fi(R.sumH1LY)+' H1 LY',
+      f2(si.seasRatio)+'x');
+    html += step('H1 seasonal share of full year (LY)',
+      fi(R.sumH1LY)+' / '+fi(si.fyLY),
+      (si.h1Share*100).toFixed(1)+'%');
+    html += step('H2 seasonal share of full year (LY)',
+      fi(R.sumH2LY)+' / '+fi(si.fyLY),
+      (si.h2Share*100).toFixed(1)+'%');
+    html += step('H2 CY estimate (seasonal)',
+      fi(R.sumH2LY)+' H2 LY x '+f2(1+R.trend),
+      fi(si.h2CYest)+' cases');
+    html += step('Full Year CY estimate',
+      fi(si.h1cyTotal)+' H1 CY + '+fi(si.h2CYest)+' est. H2 CY',
+      fi(si.fyCYest)+' cases');
+    html += step('Full Year NY projection',
+      fi(si.fyCYest)+' x '+f2(1+R.trend),
+      fi(si.fyNYest)+' cases');
+    html += step('H1 NY from seasonal distribution',
+      fi(si.fyNYest)+' x '+(si.h1Share*100).toFixed(1)+'%',
+      fi(si.h1NYest)+' cases', 'key');
+    html += step('H2 NY from seasonal distribution',
+      fi(si.fyNYest)+' x '+(si.h2Share*100).toFixed(1)+'%',
+      fi(si.h2NYest)+' cases', 'key');
+    html += '<div class="math-note">H1 NY and H2 NY are now both grounded in the full seasonal structure. H2 projections no longer depend on early H2 daily rates. The H1 NY figure matches the simple H1 continuation (algebraically equivalent) but the H2 NY figure is now meaningfully different from what a thin H2 run rate would produce.</div>';
+    html += '</div></div>';
+  }
 
   // ── SECTION 5: Scenario lift breakdown ────────────────────────────────────
   html += '<div class="math-card full"><div class="math-hd">⑤ Scenario Lift Calculation</div><div class="math-body">';
