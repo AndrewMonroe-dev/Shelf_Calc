@@ -75,6 +75,10 @@
   .tbl-tot { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1.2fr; gap: 6px; padding: 10px 14px; background: var(--cream); font-weight: bold; font-size: 13px; color: var(--berry); }
   .tbl-tot .right { text-align: right; }
   .tbl-note { padding: 6px 14px 10px; font-size: 10px; color: var(--muted); font-style: italic; }
+  .tbl-6 { grid-template-columns: 1.5fr 0.95fr 0.95fr 0.95fr 0.95fr 1.1fr !important; }
+  .opt-hd { color: var(--sand); font-style: italic; text-align: right; }
+  .opt-cell { text-align: right; font-size: 12px; color: var(--rose); }
+  .h1cy-note { font-size: 10px; color: #D97706; font-style: italic; padding: 3px 6px; background:#FFFBEB; border-radius:4px; display:none; }
 
   /* Scenario cards */
   .sc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
@@ -129,6 +133,32 @@
   .footnote { padding: 12px 16px; background: var(--white); border-radius: 8px; font-size: 11px; color: var(--muted); font-style: italic; box-shadow: 0 1px 4px rgba(92,31,56,.08); margin-top: 4px; }
   .row-btns { margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
   .no-data { background: var(--white); border-radius: 8px; padding: 48px; text-align: center; color: var(--muted); }
+  /* Math tab */
+  .math-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media(max-width:800px){ .math-grid { grid-template-columns:1fr; } }
+  .math-card { background: var(--white); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(92,31,56,.1); }
+  .math-card.full { grid-column: 1/-1; }
+  .math-hd { background: var(--berry); color: var(--white); padding: 10px 16px; font-size: 13px; font-weight: bold; }
+  .math-hd.amber { background: #D97706; }
+  .math-body { padding: 14px 16px; }
+  .math-step { display: grid; grid-template-columns: 1.6fr 2.4fr 1fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--cream); align-items: baseline; font-size: 12px; }
+  .math-step:last-child { border-bottom: none; }
+  .math-label { color: var(--muted); }
+  .math-expr { font-family: 'Courier New', monospace; font-size: 11px; color: var(--dark); background: var(--cream); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+  .math-val { text-align: right; font-weight: bold; color: var(--dark); }
+  .math-val.key { color: var(--berry); font-size: 14px; }
+  .math-val.pos { color: var(--green); }
+  .math-val.neg { color: #B91C1C; }
+  .math-val.amber { color: #D97706; }
+  .math-note { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--cream); }
+  .sc-lift-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  @media(max-width:700px){ .sc-lift-grid { grid-template-columns:1fr; } }
+  .sc-lift-card { background: var(--cream); border-radius: 6px; padding: 12px; }
+  .sc-lift-card-hd { font-size: 12px; font-weight: bold; color: var(--berry); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--sand); }
+  .lift-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; }
+  .lift-row .lbl { color: var(--muted); }
+  .lift-row .val { font-family: 'Courier New', monospace; color: var(--dark); }
+  .lift-total { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--berry); margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rose); }
   .no-data h2 { font-size: 22px; color: var(--berry); margin-bottom: 8px; }
   .no-data p { font-size: 14px; margin-bottom: 20px; }
 </style>
@@ -145,6 +175,7 @@
     <button class="tab-btn active" onclick="switchTab(0)">① Data Entry</button>
     <button class="tab-btn" onclick="switchTab(1)">② Scenarios</button>
     <button class="tab-btn" onclick="switchTab(2)">③ Results</button>
+    <button class="tab-btn" onclick="switchTab(3)">④ Math</button>
   </div>
 </div>
 
@@ -160,6 +191,9 @@
     </div>
     <div class="mode-desc" id="mode-desc">
       <strong>H1 in hand, projecting H2:</strong> Enter Last Year H1 &amp; H2, plus your H1 Current Year actuals. The model projects H2 Current Year and H1 Next Year using the H1 trend rate.
+    </div>
+    <div id="partial-entry-warn" style="display:none;background:#FFFBEB;border-left:3px solid #D97706;border-radius:6px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#92400E">
+      <strong>Partial data entry:</strong> <span id="partial-entry-detail"></span> The trend rate is computed only from SKUs that have both Last Year and Current Year data, so unfilled SKUs do not distort it. Fill every active SKU for a complete brand trend.
     </div>
 
     <!-- Settings -->
@@ -177,7 +211,7 @@
       <div class="set-card" id="card-dh1cy">
         <label id="lbl-dh1cy">Days in H1 — Current Year</label>
         <input type="number" id="g-dh1cy" value="182" min="1" max="200" step="1" oninput="recalc()">
-        <div class="tip" id="tip-dh1cy">Full H1 = leave at 182. Mid-H1 = enter actual days of data you have.</div>
+        <div class="tip" id="tip-dh1cy">Full H1 = 182. Mid-H1 = enter actual days of data you have.</div>
       </div>
       <div class="set-card" id="card-dh2cy">
         <label id="lbl-dh2cy">Days in H2 — Current Year</label>
@@ -188,31 +222,33 @@
         <div class="set-card estimate">
           <label id="manual-trend-label">Estimated Trend Rate %</label>
           <input type="number" id="g-manual-trend" value="" step="0.1" placeholder="e.g. -4.6" oninput="recalc()">
-          <div class="tip">No current year data. Enter your best estimate. Positive = growth, negative = decline.</div>
+          <div class="tip">No current year data. Enter your best estimate.</div>
         </div>
       </div>
       <div class="set-card dark" id="decline-card" style="display:none">
         <label id="trend-label">H1 Trend Rate</label>
         <div class="bigval" id="decline-val">—</div>
-        <div class="tip" id="decline-tip">Positive = growth. Negative = decline.</div>
+        <div class="tip" id="decline-tip"></div>
       </div>
     </div>
 
     <!-- SKU Table -->
     <div class="tbl-wrap">
-      <div class="tbl-hd">
+      <div class="tbl-hd" id="tbl-hd-row">
         <div>SKU Name</div>
         <div class="right">H1 Last Year</div>
         <div class="right">H2 Last Year</div>
         <div class="right" id="col-actP">H1 Current Year</div>
+        <div class="opt-hd" id="col-h1cy-opt" style="display:none">H1 Curr. Year <em>(opt.)</em></div>
         <div class="proj-hd" id="col-proj">H2 Projected *</div>
       </div>
       <div id="sku-rows"></div>
-      <div class="tbl-tot">
+      <div class="tbl-tot" id="tbl-tot-row">
         <div>TOTAL</div>
         <div class="right" id="tot-h1ly">—</div>
         <div class="right" id="tot-h2ly">—</div>
         <div class="right" id="tot-actp">—</div>
+        <div class="right opt-cell" id="tot-h1cy-m1" style="display:none">—</div>
         <div class="right" id="tot-proj" style="color:var(--rose);font-style:italic">—</div>
       </div>
       <div class="tbl-note" id="tbl-note">* H2 Projected = H2 Last Year × (1 + H1 Trend Rate). Empty rows excluded from all calculations.</div>
@@ -238,6 +274,11 @@
     <div id="results-inner"></div>
   </div>
 
+  <!-- TAB 3: MATH -->
+  <div class="tab-panel" id="panel-3">
+    <div id="math-inner"></div>
+  </div>
+
 </div>
 
 <script>
@@ -255,8 +296,9 @@ const SCENARIOS = [
 
 const gv  = id => document.getElementById(id);
 const num = v  => parseFloat(v) || 0;
-const fmtN   = n => (!n||isNaN(n)) ? '—' : Math.round(Math.abs(n)).toLocaleString();
-const fmtPos = n => (!n||isNaN(n)) ? '—' : '+'+Math.round(n).toLocaleString();
+// blank param = show em-dash for missing; 0 is a legitimate value and renders as "0"
+const fmtN   = (n,blank) => (n===null||n===undefined||isNaN(n)||(blank&&n===0)) ? '—' : Math.round(n).toLocaleString();
+const fmtPos = (n,blank) => (n===null||n===undefined||isNaN(n)||(blank&&n===0)) ? '—' : (n>=0?'+':'−')+Math.round(Math.abs(n)).toLocaleString();
 const pct    = n => isNaN(n) ? '—' : (n>=0?'+':'−')+Math.abs(n).toFixed(1)+'%';
 
 // ── Mode toggle ───────────────────────────────────────────────────────────────
@@ -271,7 +313,7 @@ const MODE_LABELS = {
     primLbl:  'H2 Current Year',
     secLbl:   'H1 Next Year',
     secVs:    'H1 Next Year vs. H1 Current Year',
-    fyLbl:    'Full Year: Current vs. Last Year',
+    fyLbl:    'Full Year (H1 CY + H2 CY) vs. Last Year',
     skuHd:    'H2 Current Year',
   },
   1: {
@@ -279,12 +321,12 @@ const MODE_LABELS = {
     proj:     'H1 Next Year *',
     trend:    'H2 Trend Rate',
 
-    note:     '* H1 Next Year = H1 Last Year × (1 + H2 Trend Rate). Empty rows excluded from all calculations.',
-    desc:     '<strong>H2 in hand, projecting H1 next year:</strong> Enter Last Year H1 &amp; H2, plus your H2 Current Year actuals. The model projects H1 Next Year and H2 Next Year using the H2 trend rate.',
+    note:     '* H1 Next Year = [H1 CY if entered, else H1 LY] × (1 + H2 Trend Rate). H1 Current Year column (amber) is optional — more accurate when provided. Empty rows excluded.',
+    desc:     '<strong>H2 in hand, projecting H1 next year:</strong> Enter Last Year H1 &amp; H2, plus H2 Current Year actuals. Optionally enter <strong>H1 Current Year</strong> — if provided, it replaces H1 Last Year as the projection base for H1 Next Year, giving a more accurate result. Trend rate always uses H2 CY vs H2 LY.',
     primLbl:  'H1 Next Year',
     secLbl:   'H2 Next Year',
     secVs:    'H2 Next Year vs. H2 Current Year',
-    fyLbl:    'Full Year: Projected vs. Last Year',
+    fyLbl:    'Rolling 12 Months (H2 CY + H1 NY) vs. Last Year',
     skuHd:    'H1 Next Year',
   },
 };
@@ -300,10 +342,13 @@ function setMode(m) {
 
   gv('tbl-note').textContent  = L.note;
   gv('mode-desc').innerHTML   = L.desc;
-  // Highlight the active current-year day field for this mode
+  // Highlight the active current-year day fields for this mode
   const c1=gv('card-dh1cy'), c2=gv('card-dh2cy');
-  if(c1) c1.style.borderLeft = m===0 ? '3px solid var(--berry)' : '';
+  if(c1) c1.style.borderLeft = m===0 ? '3px solid var(--berry)' : '3px solid #D97706';
   if(c2) c2.style.borderLeft = m===1 ? '3px solid var(--berry)' : '';
+  // Label dh1cy card appropriately per mode
+  const lbl1=gv('lbl-dh1cy');
+  if(lbl1) lbl1.textContent = m===0 ? 'Days in H1 — Current Year' : 'Days in H1 CY (if entering H1 CY data)';
   buildSkuRows();
   recalc();
 }
@@ -312,12 +357,22 @@ function setMode(m) {
 function buildSkuRows() {
   const cont = gv('sku-rows');
   cont.innerHTML = '';
+  const isM1 = MODE===1;
+  // Toggle 6-column grid on header/total rows
+  const hdr=gv('tbl-hd-row'), tot=gv('tbl-tot-row');
+  if(hdr){ hdr.className = isM1 ? 'tbl-hd tbl-6' : 'tbl-hd'; }
+  if(tot){ tot.className = isM1 ? 'tbl-tot tbl-6' : 'tbl-tot'; }
+  // Show/hide optional column headers and totals
+  const ch=gv('col-h1cy-opt'), ct=gv('tot-h1cy-m1');
+  if(ch) ch.style.display = isM1 ? '' : 'none';
+  if(ct) ct.style.display = isM1 ? '' : 'none';
+
   SKUS.forEach(s => {
     const actField = MODE===0 ? 'h1cy' : 'h2cy';
     const actVal   = MODE===0 ? s.h1cy : s.h2cy;
     const row = document.createElement('div');
-    row.className = 'tbl-row';
-    row.innerHTML =
+    row.className = isM1 ? 'tbl-row tbl-6' : 'tbl-row';
+    let inner =
       '<div><input type="text" value="'+s.name+'" placeholder="SKU '+(s.id+1)+'" '+
         'oninput="SKUS['+s.id+'].name=this.value"></div>'+
       '<div><input type="number" value="'+s.h1ly+'" placeholder="0" min="0" '+
@@ -325,8 +380,16 @@ function buildSkuRows() {
       '<div><input type="number" value="'+s.h2ly+'" placeholder="0" min="0" '+
         'oninput="SKUS['+s.id+'].h2ly=this.value;recalc()"></div>'+
       '<div><input type="number" value="'+actVal+'" placeholder="0" min="0" '+
-        'oninput="SKUS['+s.id+'].'+actField+'=this.value;recalc()"></div>'+
-      '<div class="proj-cell" id="proj-'+s.id+'">—</div>';
+        'oninput="SKUS['+s.id+'].'+actField+'=this.value;recalc()"></div>';
+    if (isM1) {
+      inner +=
+        '<div><input type="number" value="'+s.h1cy+'" placeholder="opt." min="0" '+
+          'style="border-color:#D97706;color:#92400E" '+
+          'title="H1 Current Year (optional) — if entered, used as projection base instead of H1 Last Year" '+
+          'oninput="SKUS['+s.id+'].h1cy=this.value;recalc()"></div>';
+    }
+    inner += '<div class="proj-cell" id="proj-'+s.id+'">—</div>';
+    row.innerHTML = inner;
     cont.appendChild(row);
   });
 }
@@ -437,24 +500,44 @@ function calc() {
   const sumRefLY  = MODE===0 ? sumH1LY : sumH2LY;
   const sumPrimLY = MODE===0 ? sumH2LY : sumH1LY;
 
-  const dailyRefLY  = sumRefLY  / dRef;
-  const dailyActCY  = sumActP   / dAct;
+  // ── Matched set: SKUs with BOTH a reference-period LY value AND an active CY value.
+  // The trend ratio must compare like-for-like. Including a SKU that has LY data but
+  // no CY data (delayed reporting, discontinued) would drag the brand trend toward
+  // -100%. So the trend is computed only over the matched set. ALL SKUs with LY data
+  // are still projected — they just inherit the matched-set trend.
+  let matchRefLY = 0, matchActCY = 0, nMatched = 0, nRefOnly = 0;
+  rows.forEach(r => {
+    const refLY = MODE===0 ? r.h1ly : r.h2ly;
+    if (refLY > 0 && r.actP > 0) { matchRefLY += refLY; matchActCY += r.actP; nMatched++; }
+    else if (refLY > 0 && r.actP === 0) { nRefOnly++; }
+  });
+
   const dailyPrimLY = sumPrimLY / dPrim;
 
   const hasActData   = sumActP > 0;
   const manualInput  = gv('g-manual-trend').value.trim();
   const usingManual  = !hasActData && manualInput !== '';
-  const manualRate   = parseFloat(manualInput) / 100 || 0;
+  const manualRate   = Math.max(-1, parseFloat(manualInput) / 100 || 0);  // clamp ≥ -100%
+
+  // Daily rates use the MATCHED set for the trend numerator/denominator.
+  const dailyRefLY_matched = nMatched > 0 ? matchRefLY / dRef : 0;
+  const dailyActCY_matched = nMatched > 0 ? matchActCY / dAct : 0;
 
   const trend     = usingManual ? manualRate
-                  : (dailyRefLY > 0 ? dailyActCY / dailyRefLY - 1 : 0);
+                  : (dailyRefLY_matched > 0 ? dailyActCY_matched / dailyRefLY_matched - 1 : 0);
   const isPartial = !usingManual && dAct < dRef;
+  // Some-but-not-all CY data entered: flag it so the UI can warn.
+  const partialEntry = !usingManual && hasActData && nRefOnly > 0;
+
+  // Legacy names kept for downstream code (now matched-set based):
+  const dailyRefLY = dailyRefLY_matched;
+  const dailyActCY = dailyActCY_matched;
 
   // Normalized active period
   // Manual mode: estimate from same-period LY × trend
   // Data mode:   actual daily rate × reference period days
   const actPNorm  = usingManual ? sumRefLY * (1 + trend)
-                                : dailyActCY * dRef;
+                                : (sumActP / dAct) * dRef;
 
   // Primary projection: LY primary daily rate × trend × target days
   const sumPrimProj = dailyPrimLY * (1 + trend) * dPrim;
@@ -463,7 +546,12 @@ function calc() {
   // Manual mode: actPNorm (estimated CY) × trend = two steps from LY
   // Data mode:   CY daily rate × trend × ref days
   const sumSecProj  = usingManual ? actPNorm * (1 + trend)
-                                  : dailyActCY * (1 + trend) * dRef;
+                                  : (sumActP / dAct) * (1 + trend) * dRef;
+
+  // In Mode 1: H1 CY (if entered) is preferred over H1 LY as H1 NY projection base.
+  // Days: H1 CY uses dh1cy; H1 LY uses dPrim (= dh1ly). Both project to dPrim length.
+  const h1cyBaseUsed = MODE===1 && rows.some(r => r.h1cy > 0);
+  let sumH1CYMode1 = 0;
 
   rows.forEach(r => {
     if (usingManual) {
@@ -472,12 +560,21 @@ function calc() {
       r.actPNorm = rRefLY  * (1 + trend);
       r.primProj = rPrimLY * (1 + trend);
       r.secProj  = r.actPNorm * (1 + trend);
+      r.usedH1CY = false;
     } else {
-      const rDailyActCY  = r.actP / dAct;
-      const rDailyPrimLY = (MODE===0 ? r.h2ly : r.h1ly) / dPrim;
+      const rDailyActCY = r.actP / dAct;
       r.actPNorm = rDailyActCY * dRef;
-      r.primProj = rDailyPrimLY * (1 + trend) * dPrim;
-      r.secProj  = rDailyActCY  * (1 + trend) * dRef;
+      r.secProj  = rDailyActCY * (1 + trend) * dRef;
+      // Primary projection base: H1 CY (if Mode 1 and entered) else H1/H2 LY
+      if (MODE===1 && r.h1cy > 0) {
+        r.usedH1CY = true;
+        r.primProj = (r.h1cy / dh1cy) * (1 + trend) * dPrim;
+        sumH1CYMode1 += r.h1cy;
+      } else {
+        r.usedH1CY = false;
+        const rDailyPrimLY = (MODE===0 ? r.h2ly : r.h1ly) / dPrim;
+        r.primProj = rDailyPrimLY * (1 + trend) * dPrim;
+      }
     }
   });
 
@@ -515,9 +612,15 @@ function calc() {
 
   return {
     rows, sumH1LY, sumH2LY, sumActP, actPNorm, sumLY,
-    trend:trend*100, sumPrimProj, fyBase,
-    isPartial, dAct, dRef,
-    hasActData, usingManual,
+    trend:trend*100, sumPrimProj, sumSecProj, fyBase,
+    isPartial, dAct, dRef, dPrim,
+    matchRefLY, matchActCY, nMatched, nRefOnly,
+    dailyRefLY_matched, dailyActCY_matched, dailyPrimLY,
+    sumRefLY: MODE===0?sumH1LY:sumH2LY,
+    sumPrimLY: MODE===0?sumH2LY:sumH1LY,
+    manualRate: usingManual ? manualRate*100 : null,
+    h1cyBaseUsed, sumH1CYMode1,
+    hasActData, usingManual, partialEntry,
     hasData:sumLY>0, sc,
   };
 }
@@ -534,14 +637,21 @@ function recalc() {
   const dh2cy_r = Math.max(1, num(gv('g-dh2cy').value));
   const dAct_r  = MODE===0 ? dh1cy_r : dh2cy_r;
   const dPrim_r = MODE===0 ? dh2ly_r : dh1ly_r;
-  let tH1LY=0,tH2LY=0,tActP=0,tProj=0;
+  let tH1LY=0,tH2LY=0,tActP=0,tProj=0,tH1CYm1=0;
   SKUS.forEach(s=>{
     tH1LY+=num(s.h1ly); tH2LY+=num(s.h2ly);
     const aVal = MODE===0?num(s.h1cy):num(s.h2cy);
     tActP+=aVal;
-    const primLY = MODE===0?num(s.h2ly):num(s.h1ly);
-    const dailyPrimLY = dPrim_r>0 ? primLY/dPrim_r : 0;
-    const proj = dailyPrimLY*(1+R.trend/100)*dPrim_r;
+    const h1cyVal = num(s.h1cy);
+    if(MODE===1) tH1CYm1+=h1cyVal;
+    // Projected column: use H1 CY base in Mode 1 if available
+    let proj=0;
+    if(MODE===1 && h1cyVal>0){
+      proj = (h1cyVal/dh1cy_r)*(1+R.trend/100)*dPrim_r;
+    } else {
+      const primLY = MODE===0?num(s.h2ly):num(s.h1ly);
+      proj = dPrim_r>0 ? (primLY/dPrim_r)*(1+R.trend/100)*dPrim_r : 0;
+    }
     tProj+=proj;
     const el=gv('proj-'+s.id);
     if(el) el.textContent = proj>0 ? Math.round(proj).toLocaleString() : '—';
@@ -551,10 +661,23 @@ function recalc() {
   gv('tot-h2ly').textContent = tH2LY>0?tH2LY.toLocaleString():'—';
   gv('tot-actp').textContent = tActP>0?tActP.toLocaleString():'—';
   gv('tot-proj').textContent = tProj>0?Math.round(tProj).toLocaleString():'—';
+  const th1m1=gv('tot-h1cy-m1');
+  if(th1m1) th1m1.textContent = (MODE===1&&tH1CYm1>0)?tH1CYm1.toLocaleString():'—';
 
   // Show/hide manual trend field
   const mw=gv('manual-trend-wrap');
   if(mw) mw.style.display = (R.hasData && !R.hasActData) ? 'flex' : 'none';
+
+  // Show/hide partial-entry warning
+  const pw=gv('partial-entry-warn');
+  if(pw){
+    if(R.partialEntry){
+      pw.style.display='block';
+      gv('partial-entry-detail').textContent =
+        R.nMatched+' SKU'+(R.nMatched===1?'':'s')+' matched, '+
+        R.nRefOnly+' with Last Year data still missing Current Year.';
+    } else pw.style.display='none';
+  }
 
   const dc=gv('decline-card');
   if(R.hasData && (R.hasActData || R.usingManual)){
@@ -568,8 +691,8 @@ function recalc() {
     if(tip) tip.textContent = R.usingManual
       ? 'Manually estimated — no current year data. All projections are speculative.'
       : R.isPartial
-        ? 'Partial period ('+R.dAct+' of '+R.dRef+' days). Daily-rate normalized. Positive = growth, negative = decline.'
-        : 'Full same-period comparison on daily-rate basis. Positive = growth, negative = decline.';
+        ? 'Partial period ('+R.dAct+' of '+R.dRef+' days). Daily-rate normalized.'
+        : 'Full same-period comparison on daily-rate basis.';
   } else dc.style.display='none';
 
   renderResults(R);
@@ -590,11 +713,12 @@ function renderResults(R) {
   // Metric cards
   let html='<div class="metrics-row">';
   [
-    {label:'Last Year Total',      val:fmtN(R.sumLY),        sub:'H1 LY + H2 LY combined',                    dark:false},
-    {label:L.actP,                 val:R.usingManual?'Estimated: '+fmtN(R.actPNorm):fmtN(R.actPNorm),
-      sub:R.usingManual?'No data — estimated from manual trend rate':R.isPartial?'Partial period — daily-rate normalized':'Fixed — already happened', dark:false},
-    {label:L.primLbl+' Baseline',  val:fmtN(R.sumPrimProj),  sub:'Projected — no shelf changes',               dark:false},
-    {label:L.trend,                val:pct(R.trend),          sub:R.isPartial?'Normalized partial period':'Same-period comparison. Positive = growth.',dark:true},
+    {label:'Last Year Total',      val:fmtN(R.sumLY,true),   sub:'H1 LY + H2 LY combined',                    dark:false},
+    {label:L.actP,                 val:R.usingManual?'Est: '+fmtN(R.actPNorm,true):fmtN(R.actPNorm,true),
+      sub:R.usingManual?'No data — estimated from manual trend rate':R.partialEntry?'Some SKUs missing CY data — see warning':R.isPartial?'Partial period — daily-rate normalized':'Fixed — already happened', dark:false},
+    ...(MODE===1 && !R.usingManual ? [{label:'H1 Current Year (optional)', val: R.h1cyBaseUsed ? fmtN(R.sumH1CYMode1,true) : '—', sub: R.h1cyBaseUsed ? 'Used as H1 NY projection base (more accurate)' : 'Not entered — H1 LY used as projection base instead', dark:false}] : []),
+    {label:L.primLbl+' Baseline',  val:fmtN(R.sumPrimProj,true), sub:'Projected — no shelf changes',           dark:false},
+    {label:L.trend,                val:pct(R.trend),          sub:R.isPartial?'Normalized partial period':'Same-period daily-rate comparison.',dark:true},
   ].forEach(m=>{
     html+='<div class="met-card'+(m.dark?' dark':'')+'">'+
       '<div class="met-lbl">'+m.label+'</div>'+
@@ -611,18 +735,17 @@ function renderResults(R) {
     '</tr></thead><tbody>';
 
   const rows2=[
-    {label:'Net Lift on Moving Volume',                       vals:R.sc.map(s=>pct(s.net))},
-    {label:'H2 Lift Applied (full period)',                   vals:R.sc.map(s=>pct(s.net))},
+    {label:'Net Lift on All Volume',                          vals:R.sc.map(s=>pct(s.net))},
     {section:L.primLbl},
-    {label:L.primLbl+' — No Moves',  vals:R.sc.map(s=>fmtN(s.primB)),  dim:true},
-    {label:L.primLbl+' — With Moves',vals:R.sc.map(s=>fmtN(s.primW)),  bold:true},
+    {label:L.primLbl+' — No Moves',  vals:R.sc.map(s=>fmtN(s.primB,true)),  dim:true},
+    {label:L.primLbl+' — With Moves',vals:R.sc.map(s=>fmtN(s.primW,true)),  bold:true},
     {label:L.primLbl+' Incremental', vals:R.sc.map(s=>fmtPos(s.primI)),bold:true,green:true},
     {section:L.fyLbl},
-    {label:'Full Year — No Moves',   vals:R.sc.map(s=>fmtN(s.fyBase)+'  ('+pct(s.fyBP)+')'), dim:true},
-    {label:'Full Year — With Moves', vals:R.sc.map(s=>fmtN(s.fyW)+'  ('+pct(s.fyP)+')'),    bold:true},
+    {label:'Full Year — No Moves',   vals:R.sc.map(s=>fmtN(s.fyBase,true)+'  ('+pct(s.fyBP)+')'), dim:true},
+    {label:'Full Year — With Moves', vals:R.sc.map(s=>fmtN(s.fyW,true)+'  ('+pct(s.fyP)+')'),    bold:true},
     {section:L.secVs},
-    {label:L.secLbl+' — No Moves',  vals:R.sc.map(s=>fmtN(s.secB)+'  ('+pct(s.secBP)+')'), dim:true},
-    {label:L.secLbl+' — With Moves',vals:R.sc.map(s=>fmtN(s.secW)+'  ('+pct(s.secP)+')'),  bold:true},
+    {label:L.secLbl+' — No Moves',  vals:R.sc.map(s=>fmtN(s.secB,true)+'  ('+pct(s.secBP)+')'), dim:true},
+    {label:L.secLbl+' — With Moves',vals:R.sc.map(s=>fmtN(s.secW,true)+'  ('+pct(s.secP)+')'),  bold:true},
     {label:L.secLbl+' Incremental', vals:R.sc.map(s=>fmtPos(s.secI)), bold:true,green:true},
     {section:'Combined'},
     {label:'Total Incremental Cases ('+L.primLbl+' + '+L.secLbl+')',
@@ -662,18 +785,18 @@ function renderResults(R) {
 
     active.forEach(r=>{
       html+='<tr><td class="tl">'+r.name+'</td>'+
-        '<td class="tr" style="color:var(--muted)">'+fmtN(r.actP)+'</td>'+
-        '<td class="tr" style="color:var(--muted)">'+fmtN(r.primB)+'</td>'+
-        '<td class="tr" style="font-weight:bold;color:var(--berry)">'+fmtN(r.primW)+'</td>'+
-        '<td class="tr" style="font-weight:bold;color:var(--green)">+'+fmtN(r.primI)+'</td></tr>';
+        '<td class="tr" style="color:var(--muted)">'+fmtN(r.actP,true)+'</td>'+
+        '<td class="tr" style="color:var(--muted)">'+fmtN(r.primB,true)+'</td>'+
+        '<td class="tr" style="font-weight:bold;color:var(--berry)">'+fmtN(r.primW,true)+'</td>'+
+        '<td class="tr" style="font-weight:bold;color:var(--green)">'+fmtPos(r.primI)+'</td></tr>';
     });
     const tActP=active.reduce((a,r)=>a+r.actP,0);
     html+='<tr style="background:var(--cream);font-weight:bold;color:var(--berry)">'+
       '<td class="tl">TOTAL</td>'+
-      '<td class="tr">'+fmtN(tActP)+'</td>'+
-      '<td class="tr">'+fmtN(sc.primB)+'</td>'+
-      '<td class="tr">'+fmtN(sc.primW)+'</td>'+
-      '<td class="tr">+'+fmtN(sc.primI)+'</td></tr>'+
+      '<td class="tr">'+fmtN(tActP,true)+'</td>'+
+      '<td class="tr">'+fmtN(sc.primB,true)+'</td>'+
+      '<td class="tr">'+fmtN(sc.primW,true)+'</td>'+
+      '<td class="tr">'+fmtPos(sc.primI)+'</td></tr>'+
       '</tbody></table></div>';
   });
 
@@ -681,10 +804,12 @@ function renderResults(R) {
     (R.usingManual
       ? 'ESTIMATED MODE: No current year data was entered. Trend rate is manually provided. Primary projection = Last Year same-period × (1 + trend). Secondary projection compounds the trend twice from Last Year — treat with significantly more caution than data-driven projections. '
       : 'Trend rate uses a daily-rate comparison: ('+L.actP+' cases ÷ days entered) ÷ (same-period Last Year cases ÷ days). '+
-        (R.isPartial?'Active period is '+R.dAct+' of '+R.dRef+' days — daily rate automatically normalizes for partial periods; seasonal distribution variance not accounted for. ':'')
+        (R.isPartial?'Active period is '+R.dAct+' of '+R.dRef+' days — daily rate automatically normalizes for partial periods; seasonal distribution variance not accounted for. ':'')+
+        (MODE===1 && R.h1cyBaseUsed ? 'H1 Current Year data was used as the projection base for H1 Next Year (more accurate than H1 Last Year). ' : '')+
+        (MODE===1 && !R.h1cyBaseUsed ? 'H1 Current Year not entered — H1 Last Year used as projection base. Enter H1 CY in the optional column for a more accurate H1 Next Year projection. ' : '')
     )+
     'Full period assumed to benefit from shelf moves from day one — ceiling timing assumption. '+
-    'All excluded variables (compliance, facings, competitive context) bias results toward overstatement — treat as ceiling estimates.'+
+    'All calculations run at full precision and round only for display, so a hand-summed column may differ from a shown total by a case or two. All excluded variables (compliance, facings, competitive context) bias results toward overstatement — treat as ceiling estimates.'+
   '</div>';
 
   cont.innerHTML=html;
@@ -695,6 +820,7 @@ function switchTab(i){
   document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
   document.querySelectorAll('.tab-panel').forEach((p,j)=>p.classList.toggle('active',j===i));
   if(i===2) recalc();
+  if(i===3){ const R=calc(); renderMath(R); }
 }
 
 // ── Clear ─────────────────────────────────────────────────────────────────────
@@ -709,6 +835,185 @@ function clearAll(){
 buildSkuRows();
 buildScenarios();
 recalc();
+
+// ── Math tab renderer ─────────────────────────────────────────────────────────
+function renderMath(R) {
+  const cont = gv('math-inner');
+  const L = MODE_LABELS[MODE];
+
+  if (!R.hasData) {
+    cont.innerHTML = '<div class="no-data"><h2>No data yet</h2><p>Enter SKU volumes in Data Entry to see the full calculation walkthrough.</p><button class="btn-p" onclick="switchTab(0)">Go to Data Entry</button></div>';
+    return;
+  }
+
+  const dh1ly = Math.max(1, num(gv('g-dh1ly').value));
+  const dh2ly = Math.max(1, num(gv('g-dh2ly').value));
+  const dh1cy = Math.max(1, num(gv('g-dh1cy').value));
+  const dh2cy = Math.max(1, num(gv('g-dh2cy').value));
+
+  const f3  = n => isNaN(n)||n===null ? '—' : n.toFixed(3);
+  const f2  = n => isNaN(n)||n===null ? '—' : n.toFixed(2);
+  const fi  = n => isNaN(n)||n===null ? '—' : Math.round(n).toLocaleString();
+  const fp  = n => isNaN(n)||n===null ? '—' : (n>=0?'+':'−')+Math.abs(n).toFixed(2)+'%';
+  const trendColor = R.usingManual ? 'amber' : R.trend>=0 ? 'pos' : 'neg';
+
+  // Helper: one calculation step row
+  const step = (label, expr, val, cls='') =>
+    '<div class="math-step"><span class="math-label">'+label+'</span>'+
+    '<span class="math-expr">'+expr+'</span>'+
+    '<span class="math-val '+cls+'">'+val+'</span></div>';
+
+  const hd = (title, amber) =>
+    '<div class="math-hd'+(amber?' amber':'')+'">'+title+'</div>';
+
+  let html = '';
+
+  // ── SECTION 1: Settings in use ─────────────────────────────────────────────
+  const modeStr = MODE===0
+    ? 'Mode 0 — Projecting H2 Current Year (H1 CY data in hand)'
+    : 'Mode 1 — Projecting H1 Next Year (H2 CY data in hand)';
+
+  html += '<div class="math-card full"><div class="math-hd">① Settings &amp; Roles</div><div class="math-body">';
+  html += '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+modeStr+'</div>';
+  html += step('Days in H1 Last Year',   'User input (reference period length for Mode 0 trend)', dh1ly+'d');
+  html += step('Days in H2 Last Year',   'User input (reference period length for Mode 1 trend)', dh2ly+'d');
+  html += step('Days in H1 Current Year','User input — active period in Mode 0', dh1cy+'d');
+  html += step('Days in H2 Current Year','User input — active period in Mode 1', dh2cy+'d');
+  html += step('dAct  (active period)',  MODE===0?'Days H1 CY (Mode 0 uses H1 current year)':'Days H2 CY (Mode 1 uses H2 current year)', R.dAct+'d', 'key');
+  html += step('dRef  (reference, same-period LY)', MODE===0?'Days H1 LY — same half for fair comparison':'Days H2 LY — same half for fair comparison', R.dRef+'d', 'key');
+  html += step('dPrim (projection target)',MODE===0?'Days H2 LY — the half being projected':'Days H1 LY — the half being projected', R.dPrim+'d');
+  if (R.isPartial) html += '<div class="math-note">⚠ Partial period detected: dAct ('+R.dAct+'d) &lt; dRef ('+R.dRef+'d). Daily-rate normalization is active — current year cases are scaled to a full reference-period equivalent before comparison.</div>';
+  html += '</div></div>';
+
+  // ── SECTION 2: Matched-set construction ────────────────────────────────────
+  html += '<div class="math-card full"><div class="math-hd'+(R.partialEntry?' amber':'')+'">② Matched-Set Construction</div><div class="math-body">';
+  html += '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">The trend rate must compare like-for-like. Only SKUs with both a Last Year reference value AND a Current Year value enter the trend calculation. SKUs with only Last Year data are projected at the computed trend but do not influence it.</div>';
+  html += step('SKUs with LY reference data', 'Any SKU where '+L.actP.split(' ')[0]+' '+L.actP.split(' ')[1]+' LY > 0', (R.nMatched+R.nRefOnly)+' SKU'+(R.nMatched+R.nRefOnly!==1?'s':''));
+  html += step('SKUs in matched set',         'Both LY reference AND CY active data entered', R.nMatched+' SKU'+(R.nMatched!==1?'s':''), R.nMatched>0?'pos':'neg');
+  html += step('SKUs excluded from trend',    'Have LY data but CY data not yet entered', R.nRefOnly+' SKU'+(R.nRefOnly!==1?'s':''), R.nRefOnly>0?'amber':'');
+  html += step('Matched '+L.actP.split('Current')[0].trim()+' LY total', 'Sum of same-period LY over matched SKUs only', fi(R.matchRefLY)+' cases');
+  html += step('Matched '+L.actP+' total',    'Sum of CY active-period data over matched SKUs', fi(R.matchActCY)+' cases');
+  if (R.partialEntry) html += '<div class="math-note">⚠ Partial entry: '+R.nRefOnly+' SKU'+(R.nRefOnly!==1?'s':'')+' still missing current year data. Trend computed on matched set only — fill all active SKUs for a complete brand trend.</div>';
+  html += '</div></div>';
+
+  // ── SECTION 3: Daily rates & trend ─────────────────────────────────────────
+  const manualAmber = R.usingManual;
+  html += '<div class="math-grid">';
+  html += '<div class="math-card"><div class="math-hd'+(manualAmber?' amber':'')+'">③ Daily Rates &amp; Trend Rate</div><div class="math-body">';
+
+  if (R.usingManual) {
+    html += '<div style="font-size:11px;color:#92400E;background:#FFFBEB;border-radius:4px;padding:6px 8px;margin-bottom:10px">ESTIMATED MODE: No current year data entered. Trend rate is manually provided — not derived from data.</div>';
+    html += step('Manual trend rate entered', 'User input', fp(R.manualRate), 'amber');
+    html += step('All projections use', 'Trend = manually entered value', fp(R.manualRate), 'amber');
+  } else {
+    const lrDays = R.dRef;
+    html += step(L.actP.split('Current')[0].trim()+' LY daily rate', fi(R.matchRefLY)+' cases ÷ '+R.dRef+'d', f3(R.dailyRefLY_matched)+' cases/day');
+    html += step(L.actP+' daily rate',  fi(R.matchActCY)+' cases ÷ '+R.dAct+'d', f3(R.dailyActCY_matched)+' cases/day');
+    html += step('Trend rate',
+      '('+f3(R.dailyActCY_matched)+') ÷ ('+f3(R.dailyRefLY_matched)+') − 1',
+      fp(R.trend), trendColor+' key');
+    if (R.isPartial) {
+      html += '<div class="math-note">Partial-period normalization: CY daily rate ('+f3(R.dailyActCY_matched)+'/day) is used directly — the short period cancels in the ratio, so no separate scaling step is needed. The normalized full-period equivalent is shown in Section ④.</div>';
+    }
+  }
+  html += '</div></div>';
+
+  // ── SECTION 4: Projection chain ────────────────────────────────────────────
+  const trendFactor = 1 + R.trend/100;
+  html += '<div class="math-card"><div class="math-hd">④ Projection Chain</div><div class="math-body">';
+  html += step('Trend factor', '1 + ('+fp(R.trend)+')', f2(trendFactor)+'×');
+
+  if (R.usingManual) {
+    html += step('Est. '+L.actP+' (normalized)',
+      fi(R.sumRefLY)+' LY same-period × '+f2(trendFactor),
+      fi(R.actPNorm)+' cases');
+  } else {
+    html += step('Normalized '+L.actP,
+      fi(R.sumActP)+' cases ÷ '+R.dAct+'d × '+R.dRef+'d',
+      fi(R.actPNorm)+' cases '+(R.isPartial?'(scaled to full half)':''));
+  }
+
+  const dlyPrim = R.sumPrimLY / R.dPrim;
+  html += step(MODE===0?'H2 LY daily rate':'H1 LY daily rate',
+    fi(R.sumPrimLY)+' cases ÷ '+R.dPrim+'d',
+    f3(dlyPrim)+' cases/day');
+  // In Mode 1, show which base was used for H1 NY
+  let primBaseNote = '';
+  if(MODE===1){
+    primBaseNote = R.h1cyBaseUsed
+      ? ' — base: H1 CY ('+fi(R.sumH1CYMode1)+' cases ÷ '+dh1cy+'d)'
+      : ' — base: H1 LY (H1 CY not entered)';
+  }
+  html += step(L.primLbl+' (primary projection)',
+    f3(dlyPrim)+'/day × '+f2(trendFactor)+'× × '+R.dPrim+'d'+primBaseNote,
+    fi(R.sumPrimProj)+' cases', R.h1cyBaseUsed&&MODE===1?'pos':'key');
+
+  if (R.usingManual) {
+    html += step(L.secLbl+' (secondary — 2 steps from LY)',
+      fi(R.actPNorm)+' × '+f2(trendFactor),
+      fi(R.sumSecProj)+' cases');
+  } else {
+    const dlyCY = R.sumActP / R.dAct;
+    html += step(L.secLbl+' (secondary projection)',
+      f3(dlyCY)+'/day × '+f2(trendFactor)+'× × '+R.dRef+'d',
+      fi(R.sumSecProj)+' cases');
+  }
+
+  const fyLY = R.sumLY;
+  html += step('Full Year baseline (no moves)',
+    fi(R.actPNorm)+' + '+fi(R.sumPrimProj),
+    fi(R.fyBase)+' cases');
+  html += step('Full Year vs. Last Year ('+fi(fyLY)+' cases)',
+    fi(R.fyBase)+' ÷ '+fi(fyLY)+' − 1',
+    fp((R.fyBase/fyLY-1)*100), trendColor);
+  html += '</div></div>';
+  html += '</div>'; // close math-grid
+
+  // ── SECTION 5: Scenario lift breakdown ────────────────────────────────────
+  html += '<div class="math-card full"><div class="math-hd">⑤ Scenario Lift Calculation</div><div class="math-body">';
+  html += '<div style="font-size:11px;color:var(--muted);margin-bottom:12px">Formula: Net Lift = (Total % Moving) × [ (Knee→Arm share × Knee→Arm lift) + (Knee→Eye share × Knee→Eye lift) + (Foot→Arm share × Foot→Arm lift) + (Foot→Eye share × Foot→Eye lift) ]<br>Then: Projected With Moves = Baseline × (1 + Net Lift)</div>';
+  html += '<div class="sc-lift-grid">';
+
+  SCENARIOS.forEach((s, si) => {
+    const net = (s.masterPct/100)*(
+      (s.kneeArm/100)*(s.liftKA/100)+
+      (s.kneeEye/100)*(s.liftKE/100)+
+      (s.footArm/100)*(s.liftFA/100)+
+      (s.footEye/100)*(s.liftFE/100)
+    );
+    const hdc = ['var(--berry)','var(--berryL)','var(--rose)'][si];
+    const kaC = ((s.kneeArm/100)*(s.liftKA/100)*100).toFixed(3);
+    const keC = ((s.kneeEye/100)*(s.liftKE/100)*100).toFixed(3);
+    const faC = ((s.footArm/100)*(s.liftFA/100)*100).toFixed(3);
+    const feC = ((s.footEye/100)*(s.liftFE/100)*100).toFixed(3);
+    const inner = ((s.kneeArm/100)*(s.liftKA/100)+(s.kneeEye/100)*(s.liftKE/100)+(s.footArm/100)*(s.liftFA/100)+(s.footEye/100)*(s.liftFE/100))*100;
+    const primW = R.sc[si].primW, primI = R.sc[si].primI;
+
+    html += '<div class="sc-lift-card">';
+    html += '<div class="sc-lift-card-hd" style="color:'+hdc+'">'+s.name+'</div>';
+    html += '<div class="lift-row"><span class="lbl">Total % of volume moving</span><span class="val">'+s.masterPct+'%</span></div>';
+    html += '<div style="font-size:10px;color:var(--muted);margin:6px 0 3px;text-transform:uppercase;letter-spacing:.5px">Share allocations → contributions</div>';
+    html += '<div class="lift-row"><span class="lbl">Knee→Arm: '+s.kneeArm+'% × '+s.liftKA+'%</span><span class="val">+'+kaC+'%</span></div>';
+    html += '<div class="lift-row"><span class="lbl">Knee→Eye: '+s.kneeEye+'% × '+s.liftKE+'%</span><span class="val">+'+keC+'%</span></div>';
+    html += '<div class="lift-row"><span class="lbl">Foot→Arm: '+s.footArm+'% × '+s.liftFA+'%</span><span class="val">+'+faC+'%</span></div>';
+    html += '<div class="lift-row"><span class="lbl">Foot→Eye: '+s.footEye+'% × '+s.liftFE+'%</span><span class="val">+'+feC+'%</span></div>';
+    html += '<div class="lift-row" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--sand)"><span class="lbl">Sum of contributions</span><span class="val">+'+inner.toFixed(3)+'%</span></div>';
+    html += '<div class="lift-row"><span class="lbl">× Total moving ('+s.masterPct+'%)</span><span class="val"></span></div>';
+    html += '<div class="lift-total"><span>Net lift on ALL volume</span><span>+'+( net*100).toFixed(3)+'%</span></div>';
+    html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--sand)">';
+    html += '<div class="lift-row"><span class="lbl">'+L.primLbl+' baseline</span><span class="val">'+fi(R.sumPrimProj)+' cases</span></div>';
+    html += '<div class="lift-row"><span class="lbl">× (1 + '+( net*100).toFixed(3)+'%)</span><span class="val"></span></div>';
+    html += '<div class="lift-total"><span>'+L.primLbl+' with moves</span><span>'+fi(primW)+' cases</span></div>';
+    html += '<div class="lift-row" style="margin-top:4px"><span class="lbl">Incremental cases</span><span class="val" style="color:var(--green);font-weight:bold">+'+fi(primI)+'</span></div>';
+    html += '</div></div>';
+  });
+
+  html += '</div>'; // sc-lift-grid
+  html += '<div class="math-note">All calculations run at full floating-point precision. Values shown here are rounded for display only — the difference between a hand-summed column and a displayed total is rounding, not a math error.</div>';
+  html += '</div></div>'; // math-body, math-card
+
+  cont.innerHTML = html;
+}
 </script>
 </body>
 </html>
