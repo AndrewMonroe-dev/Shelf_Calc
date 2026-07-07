@@ -193,7 +193,7 @@
       <strong>H1 in hand, projecting H2:</strong> Enter Last Year H1 &amp; H2, plus your H1 Current Year actuals. The model projects H2 Current Year and H1 Next Year using the H1 trend rate.
     </div>
     <div id="partial-entry-warn" style="display:none;background:#FFFBEB;border-left:3px solid #D97706;border-radius:6px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#92400E">
-      <strong>Partial data entry:</strong> <span id="partial-entry-detail"></span> The trend rate is computed only from SKUs that have both Last Year and Current Year data, so unfilled SKUs do not distort it. Fill every active SKU for a complete brand trend.
+      <strong>Partial data entry:</strong> <span id="partial-entry-detail"></span> The trend rate is computed only from brands or SKUs that have both Last Year and Current Year data, so unfilled rows do not distort it. Fill every active row for a complete trend.
     </div>
 
     <!-- Settings -->
@@ -674,7 +674,7 @@ function recalc() {
     if(R.partialEntry){
       pw.style.display='block';
       gv('partial-entry-detail').textContent =
-        R.nMatched+' SKU'+(R.nMatched===1?'':'s')+' matched, '+
+        R.nMatched+' row'+(R.nMatched===1?'':'s')+' matched, '+
         R.nRefOnly+' with Last Year data still missing Current Year.';
     } else pw.style.display='none';
   }
@@ -705,7 +705,7 @@ function renderResults(R) {
 
   if(!R.hasData){
     cont.innerHTML='<div class="no-data"><h2>No data yet</h2>'+
-      '<p>Enter SKU volumes in Data Entry to generate results.</p>'+
+      '<p>Enter brand or SKU volumes in Data Entry to generate results.</p>'+
       '<button class="btn-p" onclick="switchTab(0)">Go to Data Entry</button></div>';
     return;
   }
@@ -715,7 +715,7 @@ function renderResults(R) {
   [
     {label:'Last Year Total',      val:fmtN(R.sumLY,true),   sub:'H1 LY + H2 LY combined',                    dark:false},
     {label:L.actP,                 val:R.usingManual?'Est: '+fmtN(R.actPNorm,true):fmtN(R.actPNorm,true),
-      sub:R.usingManual?'No data. Estimated from manual trend rate':R.partialEntry?'Some SKUs missing CY data. See warning':R.isPartial?'Partial period: daily-rate normalized':'Fixed. Already happened', dark:false},
+      sub:R.usingManual?'No data. Estimated from manual trend rate':R.partialEntry?'Some rows missing CY data. See warning':R.isPartial?'Partial period: daily-rate normalized':'Fixed. Already happened', dark:false},
     ...(MODE===1 && !R.usingManual ? [{label:'H1 Current Year (optional)', val: R.h1cyBaseUsed ? fmtN(R.sumH1CYMode1,true) : '-', sub: R.h1cyBaseUsed ? 'Used as H1 NY projection base (more accurate)' : 'Not entered. H1 LY used as projection base instead', dark:false}] : []),
     {label:L.primLbl+' Baseline',  val:fmtN(R.sumPrimProj,true), sub:'Projected. No shelf changes',           dark:false},
     {label:L.trend,                val:pct(R.trend),          sub:R.isPartial?'Normalized partial period':'Same-period daily-rate comparison.',dark:true},
@@ -769,17 +769,16 @@ function renderResults(R) {
   R.sc.forEach((sc,si)=>{
     const active=sc.skuPrim.filter(r=>r.primB>0||r.actP>0);
     if(!active.length) return;
-    html+='<div class="det-wrap"><div class="det-hd s'+si+'">'+sc.name+' | SKU Detail ('+L.skuHd+')</div>'+
+    html+='<div class="det-wrap"><div class="det-hd s'+si+'">'+sc.name+' | Detail ('+L.skuHd+')</div>'+
       '<table><thead><tr style="background:var(--cream)">'+
-      [L.actP,L.primLbl+' Baseline',L.primLbl+' With Moves',L.primLbl+' Incremental'].map((h,hi)=>
-        '<th style="text-align:'+(hi?'right':'left')+';color:var(--muted);font-size:11px">'+
-        (hi===0?'<span style="text-align:left">SKU</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'+h:h)+'</th>'
+      ['Brand or SKU',L.actP,L.primLbl+' Baseline',L.primLbl+' With Moves',L.primLbl+' Incremental'].map((h,hi)=>
+        '<th style="text-align:'+(hi?'right':'left')+';color:var(--muted);font-size:11px">'+h+'</th>'
       ).join('')+'</tr></thead><tbody>';
 
     // Fix table header - rewrite properly
     html = html.slice(0, html.lastIndexOf('<table>')) +
       '<table><thead><tr style="background:var(--cream)">'+
-      ['SKU', L.actP, L.primLbl+' Baseline', L.primLbl+' With Moves', L.primLbl+' Incremental'].map((h,hi)=>
+      ['Brand or SKU', L.actP, L.primLbl+' Baseline', L.primLbl+' With Moves', L.primLbl+' Incremental'].map((h,hi)=>
         '<th style="text-align:'+(hi===0?'left':'right')+';color:var(--muted);font-size:11px">'+h+'</th>'
       ).join('')+'</tr></thead><tbody>';
 
@@ -825,7 +824,7 @@ function switchTab(i){
 
 // ── Clear ─────────────────────────────────────────────────────────────────────
 function clearAll(){
-  if(!confirm('Clear all SKU data and reset settings?')) return;
+  if(!confirm('Clear all data and reset settings?')) return;
   SKUS.forEach(s=>{s.name='';s.h1ly='';s.h2ly='';s.h1cy='';s.h2cy='';});
   gv('g-dh1ly').value='182'; gv('g-dh2ly').value='183'; gv('g-dh1cy').value='182'; gv('g-dh2cy').value='183'; gv('g-manual-trend').value='';
   buildSkuRows(); recalc();
@@ -842,7 +841,7 @@ function renderMath(R) {
   const L = MODE_LABELS[MODE];
 
   if (!R.hasData) {
-    cont.innerHTML = '<div class="no-data"><h2>No data yet</h2><p>Enter SKU volumes in Data Entry to see the full calculation walkthrough.</p><button class="btn-p" onclick="switchTab(0)">Go to Data Entry</button></div>';
+    cont.innerHTML = '<div class="no-data"><h2>No data yet</h2><p>Enter brand or SKU volumes in Data Entry to see the full calculation walkthrough.</p><button class="btn-p" onclick="switchTab(0)">Go to Data Entry</button></div>';
     return;
   }
 
@@ -887,13 +886,13 @@ function renderMath(R) {
 
   // ── SECTION 2: Matched-set construction ────────────────────────────────────
   html += '<div class="math-card full"><div class="math-hd'+(R.partialEntry?' amber':'')+'">② Matched-Set Construction</div><div class="math-body">';
-  html += '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">The trend rate must compare like-for-like. Only SKUs with both a Last Year reference value AND a Current Year value enter the trend calculation. SKUs with only Last Year data are projected at the computed trend but do not influence it.</div>';
-  html += step('SKUs with LY reference data', 'Any SKU where '+L.actP.split(' ')[0]+' '+L.actP.split(' ')[1]+' LY > 0', (R.nMatched+R.nRefOnly)+' SKU'+(R.nMatched+R.nRefOnly!==1?'s':''));
-  html += step('SKUs in matched set',         'Both LY reference AND CY active data entered', R.nMatched+' SKU'+(R.nMatched!==1?'s':''), R.nMatched>0?'pos':'neg');
-  html += step('SKUs excluded from trend',    'Have LY data but CY data not yet entered', R.nRefOnly+' SKU'+(R.nRefOnly!==1?'s':''), R.nRefOnly>0?'amber':'');
-  html += step('Matched '+L.actP.split('Current')[0].trim()+' LY total', 'Sum of same-period LY over matched SKUs only', fi(R.matchRefLY)+' cases');
-  html += step('Matched '+L.actP+' total',    'Sum of CY active-period data over matched SKUs', fi(R.matchActCY)+' cases');
-  if (R.partialEntry) html += '<div class="math-note">⚠ Partial entry: '+R.nRefOnly+' SKU'+(R.nRefOnly!==1?'s':'')+' still missing current year data. Trend computed on matched set only. Fill all active SKUs for a complete brand trend.</div>';
+  html += '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">The trend rate must compare like-for-like. Only brands or SKUs with both a Last Year reference value AND a Current Year value enter the trend calculation. Rows with only Last Year data are projected at the computed trend but do not influence it.</div>';
+  html += step('Rows with LY reference data', 'Any row where '+L.actP.split(' ')[0]+' '+L.actP.split(' ')[1]+' LY > 0', (R.nMatched+R.nRefOnly)+' row'+(R.nMatched+R.nRefOnly!==1?'s':''));
+  html += step('Rows in matched set',         'Both LY reference AND CY active data entered', R.nMatched+' row'+(R.nMatched!==1?'s':''), R.nMatched>0?'pos':'neg');
+  html += step('Rows excluded from trend',    'Have LY data but CY data not yet entered', R.nRefOnly+' row'+(R.nRefOnly!==1?'s':''), R.nRefOnly>0?'amber':'');
+  html += step('Matched '+L.actP.split('Current')[0].trim()+' LY total', 'Sum of same-period LY over matched rows only', fi(R.matchRefLY)+' cases');
+  html += step('Matched '+L.actP+' total',    'Sum of CY active-period data over matched rows', fi(R.matchActCY)+' cases');
+  if (R.partialEntry) html += '<div class="math-note">⚠ Partial entry: '+R.nRefOnly+' row'+(R.nRefOnly!==1?'s':'')+' still missing current year data. Trend computed on matched set only. Fill all active SKUs for a complete brand trend.</div>';
   html += '</div></div>';
 
   // ── SECTION 3: Daily rates & trend ─────────────────────────────────────────
