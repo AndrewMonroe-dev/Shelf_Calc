@@ -337,6 +337,7 @@
 let MODE = 0;         // 0 = Projecting H2, 1 = Projecting H1 Next Year
 let SHOW_DOLLARS    = 0; // 0 = cases, 1 = estimated wholesale dollars
 let USE_H1_FALLBACK = 0; // 0 = use active period trend, 1 = use H1 LY vs H1 CY trend (fallback when H2 thin)
+let lastR           = null; // cache of most recent calc() result for shelf tab live updates
 
 // Shelf value tab state
 const SHELF = {
@@ -1433,7 +1434,6 @@ function renderShelf(R) {
   cont.innerHTML = html;
 }
 
-let lastR = null;
 function shelfChanged(){ if(lastR) renderShelf(lastR); }
 </script>
 </body>
